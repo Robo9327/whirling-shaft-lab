@@ -1,0 +1,1239 @@
+<!doctype html>
+<html lang="en" data-theme="paper" data-accent="prussian">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Whirling of Shafts · Virtual Laboratory</title>
+<meta name="description" content="An interactive 3D laboratory on the whirling of shafts and critical speeds (Jeffcott rotor). Dynamics of Machines, Raj Pandya, 24BME091.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%231F3A68'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='white' stroke-width='2'/%3E%3Ccircle cx='21' cy='12' r='2.5' fill='%23E0A93B'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&display=swap">
+<script>
+try{const s=JSON.parse(localStorage.getItem('whirl-settings-v1')||'{}');if(s.theme)document.documentElement.dataset.theme=s.theme;if(s.accent)document.documentElement.dataset.accent=s.accent;}catch(e){}
+</script>
+<style>
+/* ===== Tokens =====
+   Layout concept: a textbook plate brought to life. Paper panels framed by hairline rules around a live 3D rig. */
+:root{--serif:"STIX Two Text",Cambria,"Times New Roman",serif;--ease:cubic-bezier(.2,.7,.15,1)}
+html[data-theme=paper]{--bg:#ECEEF1;--panel:#FFFFFF;--soft:#F5F6F8;--ink:#16181D;--muted:#646B76;--rule:#DCDFE4;--stage1:#FFFFFF;--stage2:#DFE3E9;--crit:#B3261E;--gold:#9A6D12;--ok:#2E6B3F;--paint:#2B3A50;--bed:#3A3E45;--fade0:rgba(255,255,255,.97);--fade1:rgba(255,255,255,0);--lift:0 1px 2px rgba(20,24,30,.06),0 10px 30px rgba(20,24,30,.07);color-scheme:light}
+html[data-theme=drafting]{--bg:#0D0F12;--panel:#14171C;--soft:#1A1E24;--ink:#E8EAEE;--muted:#9097A2;--rule:#272B33;--stage1:#1D222A;--stage2:#0D0F12;--crit:#F0705E;--gold:#E0B45A;--ok:#6CC08B;--paint:#3A4C66;--bed:#2A2D33;--fade0:rgba(20,23,28,.97);--fade1:rgba(20,23,28,0);--lift:0 10px 30px rgba(0,0,0,.35);color-scheme:dark}
+html[data-theme=blueprint]{--bg:#0A2240;--panel:#0E2B4E;--soft:#12345C;--ink:#EAF2FF;--muted:#9DB4D3;--rule:#24466E;--stage1:#174677;--stage2:#0A2240;--crit:#FF9B85;--gold:#FFD479;--ok:#9BE3B5;--paint:#456A94;--bed:#1D3657;--fade0:rgba(14,43,78,.97);--fade1:rgba(14,43,78,0);--lift:0 10px 30px rgba(0,0,0,.3);color-scheme:dark}
+html[data-theme=paper][data-accent=prussian]{--accent:#1F3A68}
+html[data-theme=paper][data-accent=oxblood]{--accent:#8C1D2C}
+html[data-theme=paper][data-accent=forest]{--accent:#1F5A43}
+html[data-theme=paper][data-accent=graphite]{--accent:#2D3138}
+html[data-theme=drafting][data-accent=prussian]{--accent:#8DB0EA}
+html[data-theme=drafting][data-accent=oxblood]{--accent:#E58C97}
+html[data-theme=drafting][data-accent=forest]{--accent:#7CC6A4}
+html[data-theme=drafting][data-accent=graphite]{--accent:#C9CED6}
+html[data-theme=blueprint][data-accent=prussian]{--accent:#BFD9FF}
+html[data-theme=blueprint][data-accent=oxblood]{--accent:#FFC2B8}
+html[data-theme=blueprint][data-accent=forest]{--accent:#BFF0D8}
+html[data-theme=blueprint][data-accent=graphite]{--accent:#FFFFFF}
+html{--on-accent:var(--panel)}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden}
+body{background:var(--bg);color:var(--ink);font-family:var(--serif);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;font-variant-numeric:lining-nums}
+button,input,select{font:inherit;color:inherit}
+i.m,.m{font-style:italic}
+sub,sup{font-size:.72em;line-height:0}
+.sc{font-variant-caps:all-small-caps;letter-spacing:.06em}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+
+/* ===== Buttons ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--rule);background:var(--panel);border-radius:3px;padding:6px 12px;font-size:14px;cursor:pointer;transition:border-color .2s,background .2s,color .2s;white-space:nowrap}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.primary:hover{filter:brightness(1.12)}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.ghost:hover{border-color:var(--rule)}
+.btn[aria-pressed=true]{border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.icon{width:34px;height:34px;padding:0}
+.icon svg{width:18px;height:18px}
+
+/* ===== Range inputs (fine instrument style) ===== */
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:18px;background:transparent;margin:0;cursor:pointer;--p:50%}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--accent) var(--p),var(--rule) var(--p))}
+input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--accent) var(--p),var(--rule) var(--p))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--panel);border:1.5px solid var(--ink);margin-top:-6px;transition:transform .15s}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:var(--panel);border:1.5px solid var(--ink)}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.25)}
+
+/* ===== 3D stage ===== */
+#stage{position:fixed;inset:0;background:radial-gradient(120% 95% at 68% 42%,var(--stage1),var(--stage2))}
+#glwrap{position:absolute;inset:0}
+#gl{display:block;width:100%;height:100%;outline:none;touch-action:none}
+#lbls{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.l3{position:absolute;left:0;top:0;font-style:italic;font-size:16px;font-weight:600;padding:0 5px;border-radius:2px;background:var(--fade0);line-height:1.3;white-space:nowrap;transition:opacity .3s}
+.l3.o{color:var(--ink)} .l3.s{color:var(--accent)} .l3.g{color:var(--gold)}
+.no3d::after{content:"3D view needs WebGL. The rest of the laboratory works normally.";position:absolute;inset:auto 0 50% 0;text-align:center;color:var(--muted)}
+
+/* ===== Intro ===== */
+body[data-stage=intro] #intro{opacity:1;pointer-events:auto}
+#intro{position:fixed;inset:0;display:flex;align-items:center;opacity:0;pointer-events:none;transition:opacity .9s var(--ease);background:linear-gradient(90deg,var(--fade0) 0%,var(--fade0) 30%,var(--fade1) 62%)}
+.intro-in{max-width:620px;padding-left:max(24px,7vw);padding-right:24px}
+.intro-in > *{opacity:0;transform:translateY(16px);animation:rise 1s var(--ease) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+.kicker{font-variant-caps:all-small-caps;letter-spacing:.14em;color:var(--muted);font-size:15px}
+.intro-in h1{font-size:clamp(2.6rem,5.4vw,4.6rem);font-weight:500;line-height:1.02;margin:.25em 0 .2em;letter-spacing:-.01em;text-wrap:balance}
+.intro-in h1 em{font-style:italic;color:var(--accent)}
+.rule{height:1px;background:var(--ink);transform-origin:left;transform:scaleX(0);animation:draw 1.4s var(--ease) forwards;margin:18px 0;opacity:1!important}
+@keyframes draw{to{transform:scaleX(1)}}
+.byline{display:flex;flex-wrap:wrap;gap:4px 28px;font-size:15px}
+.byline b{font-weight:600;font-size:17px}
+.abstract{color:var(--muted);font-size:16.5px;line-height:1.6;margin:18px 0 26px;max-width:56ch}
+.abstract .sc{color:var(--ink)}
+.cta{display:flex;flex-wrap:wrap;align-items:center;gap:14px 22px}
+.btn.big{font-size:17px;padding:14px 26px;letter-spacing:.02em}
+.btn.big .arr{transition:transform .25s}
+.btn.big:hover .arr{transform:translateX(4px)}
+.linkbtn{border:none;background:none;color:var(--muted);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-size:14.5px;padding:4px}
+.linkbtn:hover{color:var(--ink)}
+.meta-note{font-size:13px;color:var(--muted);margin-top:22px}
+
+/* ===== Briefing ===== */
+#brief{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .6s}
+body[data-stage=brief] #brief{opacity:1}
+.bcard{pointer-events:auto;position:absolute;left:0;top:0;bottom:0;width:min(640px,50vw);background:var(--panel);border-right:1px solid var(--rule);display:flex;flex-direction:column;box-shadow:var(--lift);transform:translateX(-100%);transition:transform .9s var(--ease)}
+body[data-stage=brief] .bcard{transform:none}
+.bhead{display:flex;justify-content:space-between;align-items:center;padding:22px 44px 0;font-size:13.5px;color:var(--muted)}
+.bbody{flex:1;overflow:auto;padding:18px 44px 10px;position:relative}
+.chap{animation:chapIn .7s var(--ease)}
+@keyframes chapIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.chap .num{font-size:15px;color:var(--accent);font-variant-caps:all-small-caps;letter-spacing:.14em}
+.chap h2{font-size:clamp(1.8rem,2.6vw,2.4rem);font-weight:500;line-height:1.1;margin:.15em 0 .55em;text-wrap:balance}
+.chap p{margin:0 0 .85em;max-width:62ch;line-height:1.62}
+.chap p.lead{font-size:17px}
+.chap ol{padding-left:1.3em;margin:0 0 1em}
+.chap ol li{margin-bottom:.45em;line-height:1.55}
+.disp{margin:14px 0 18px;padding:14px 18px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);font-size:18px;text-align:center;line-height:2.1;overflow-x:auto;white-space:nowrap}
+.disp .tag{float:right;color:var(--muted);font-size:14px}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;line-height:1.15;margin:0 3px}
+.frac>span:first-child{border-bottom:1px solid currentColor;padding:0 3px}
+.frac>span{padding:0 2px}
+.ktab{width:100%;border-collapse:collapse;margin:8px 0 16px;font-size:15px}
+.ktab td{padding:6px 4px;border-bottom:1px solid var(--rule)}
+.ktab td:last-child{text-align:right}
+.bfoot{padding:14px 44px 22px;border-top:1px solid var(--rule)}
+.prog{display:flex;gap:5px;margin-bottom:14px}
+.prog span{flex:1;height:3px;background:var(--rule);position:relative;overflow:hidden}
+.prog span::after{content:"";position:absolute;inset:0;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .6s var(--ease)}
+.prog span.done::after{transform:scaleX(1)}
+.bnav{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.launch{width:100%;font-size:21px;padding:20px;margin-top:6px;letter-spacing:.03em;position:relative;overflow:hidden}
+.launch::after{content:"";position:absolute;top:0;bottom:0;width:40%;left:-60%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);animation:sheen 2.6s infinite}
+@keyframes sheen{to{left:130%}}
+.figcap{position:fixed;right:24px;bottom:22px;max-width:min(440px,40vw);font-size:14px;color:var(--muted);text-align:left;pointer-events:none;opacity:0;transition:opacity .6s;background:var(--fade0);border:1px solid var(--rule);padding:9px 13px;border-radius:3px;line-height:1.45}
+body[data-stage=brief] .figcap{opacity:1}
+.figcap b{color:var(--ink);font-weight:600}
+
+/* ===== Boot ===== */
+#boot{position:fixed;inset:0;display:grid;place-items:center;background:var(--fade0);opacity:0;pointer-events:none;transition:opacity .7s;z-index:20}
+#boot.show{opacity:1;pointer-events:auto}
+.bootbox{width:min(420px,86vw)}
+.bootbox h3{font-weight:500;font-size:26px;margin:0 0 14px}
+.bootline{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--rule);font-size:15px;opacity:0;transform:translateY(6px);transition:all .45s var(--ease)}
+.bootline.on{opacity:1;transform:none}
+.bootline .ok{color:var(--ok);opacity:0;transition:opacity .3s}
+.bootline.done .ok{opacity:1}
+.bootbar{height:2px;background:var(--rule);margin-top:18px}
+.bootbar i{display:block;height:100%;width:0;background:var(--accent);transition:width .4s linear}
+
+/* ===== App shell ===== */
+#app{position:fixed;inset:0;display:grid;grid-template-columns:300px minmax(0,1fr) 292px;grid-template-rows:56px minmax(0,1fr) 78px;grid-template-areas:"top top top" "left main right" "left bottom right";visibility:hidden}
+body[data-stage=app] #app,body[data-stage=boot] #app{visibility:visible}
+body[data-stage=app] #stage,body[data-stage=boot] #stage{visibility:hidden}
+[data-boot]{transition:opacity .8s var(--ease),transform .8s var(--ease)}
+#app.pre [data-boot]{opacity:0}
+#app.pre #top{transform:translateY(-100%)}
+#app.pre #left{transform:translateX(-30px)}
+#app.pre #right{transform:translateX(30px)}
+#app.pre #bottom{transform:translateY(30px)}
+#app.pre #main{transform:scale(.97)}
+#app.pre .ro{opacity:0;transform:translateX(16px)}
+.ro{transition:opacity .6s var(--ease),transform .6s var(--ease)}
+
+#top{grid-area:top;display:flex;align-items:center;gap:18px;padding:0 14px 0 18px;border-bottom:1px solid var(--rule);background:var(--panel);min-width:0;z-index:3}
+.brand{display:flex;align-items:baseline;gap:12px;min-width:0;white-space:nowrap}
+.brand b{font-size:19px;font-weight:600}
+.brand span{color:var(--muted);font-size:13.5px;overflow:hidden;text-overflow:ellipsis}
+.tabs{display:flex;gap:2px;margin:0 auto;height:100%}
+.tab{border:none;background:none;padding:0 14px;height:100%;cursor:pointer;color:var(--muted);font-size:15px;position:relative;white-space:nowrap}
+.tab::after{content:"";position:absolute;left:12px;right:12px;bottom:-1px;height:2px;background:var(--accent);transform:scaleX(0);transition:transform .35s var(--ease)}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected=true]{color:var(--ink)}
+.tab[aria-selected=true]::after{transform:scaleX(1)}
+.tab kbd{font-family:inherit;font-size:11px;color:var(--muted);margin-left:5px;opacity:.7}
+.tools{display:flex;gap:4px}
+
+#left,#right{background:var(--panel);overflow:auto;padding:14px 18px 18px;scrollbar-width:thin;min-height:0}
+#left{grid-area:left;border-right:1px solid var(--rule)}
+#right{grid-area:right;border-left:1px solid var(--rule)}
+.ph{font-size:20px;font-weight:600;margin:0 0 2px}
+.psub{font-size:13px;color:var(--muted);margin:0 0 12px}
+.grp{margin-top:14px}
+.gh{font-variant-caps:all-small-caps;letter-spacing:.1em;font-size:15px;font-weight:600;border-bottom:1px solid var(--ink);padding-bottom:2px;margin-bottom:8px;display:flex;justify-content:space-between}
+.prm{padding:6px 0 4px;border-bottom:1px solid var(--rule)}
+.prm .top{display:grid;grid-template-columns:34px 1fr auto;align-items:baseline;gap:6px}
+.prm .sym{font-style:italic;color:var(--accent);font-size:16px}
+.prm label{font-size:14px}
+.nin{display:flex;align-items:baseline;gap:3px}
+.nin input{width:62px;border:none;border-bottom:1px solid var(--rule);background:transparent;text-align:right;color:var(--accent);font-size:15px;padding:1px 2px;font-variant-numeric:tabular-nums}
+.nin input:focus{outline:none;border-bottom-color:var(--accent)}
+.nin em{font-style:normal;color:var(--muted);font-size:12.5px;min-width:20px}
+select.sel{width:100%;border:1px solid var(--rule);background:var(--panel);border-radius:3px;padding:6px 8px;font-size:14px;color:var(--accent)}
+.bcs{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.bcb{border:1px solid var(--rule);background:var(--panel);border-radius:3px;padding:6px 6px 5px;cursor:pointer;text-align:center;font-size:13px;line-height:1.2;transition:all .2s}
+.bcb svg{display:block;width:100%;height:22px;margin-bottom:3px;color:var(--ink)}
+.bcb:hover{border-color:var(--ink)}
+.bcb[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--accent)}
+.bcb[aria-pressed=true] svg{color:var(--accent)}
+.chk{display:flex;gap:8px;align-items:center;font-size:14px;padding:8px 0 2px;cursor:pointer}
+.chk input{accent-color:var(--accent)}
+
+/* results panel */
+.regime{border:1px solid var(--rule);border-radius:3px;padding:10px 12px;margin-bottom:12px;position:relative;overflow:hidden;transition:border-color .3s}
+.regime .rn{font-size:19px;font-weight:600;transition:color .3s}
+.regime p{margin:2px 0 8px;font-size:13.5px;color:var(--muted);line-height:1.45}
+.regime.crit{border-color:var(--crit)} .regime.crit .rn{color:var(--crit)}
+.regime.super .rn{color:var(--ok)} .regime.sub .rn{color:var(--accent)}
+.rgauge{position:relative;height:16px}
+.rgauge .ln{position:absolute;left:0;right:0;top:7px;height:2px;background:var(--rule)}
+.rgauge .bd{position:absolute;top:2px;height:12px;background:var(--crit);opacity:.15;left:34%;width:12%}
+.rgauge .nc{position:absolute;top:0;height:16px;width:1px;background:var(--crit);left:40%}
+.rgauge .pt{position:absolute;top:3px;width:10px;height:10px;border-radius:50%;background:var(--ink);transform:translateX(-50%);transition:left .1s linear}
+.rgl{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:2px}
+.ro{display:grid;grid-template-columns:30px 1fr;gap:0 8px;padding:7px 0;border-bottom:1px solid var(--rule)}
+.ro .s{font-style:italic;color:var(--accent);font-size:16px;grid-row:span 2;padding-top:1px}
+.ro .l{font-size:12.5px;color:var(--muted);font-variant-caps:all-small-caps;letter-spacing:.06em;font-size:14px;line-height:1.1}
+.ro .v{font-size:19px;font-variant-numeric:tabular-nums;line-height:1.25}
+.ro .v small{font-size:13px;color:var(--muted);margin-left:3px}
+.ro .v .x{font-size:12.5px;color:var(--muted);margin-left:8px}
+.ro.key .v{font-size:25px;font-weight:600;color:var(--accent)}
+.good{color:var(--ok)!important}.warn{color:var(--gold)!important}.bad{color:var(--crit)!important}
+
+/* main + views */
+#main{grid-area:main;position:relative;overflow:hidden;min-width:0;min-height:0}
+.view{position:absolute;inset:0;overflow:auto;padding:16px 18px}
+.view.enter{animation:viewIn .55s var(--ease)}
+@keyframes viewIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+#vRig{padding:0;overflow:hidden}
+#viewport{position:absolute;inset:0;background:radial-gradient(120% 95% at 55% 40%,var(--stage1),var(--stage2))}
+.hud{position:absolute;pointer-events:none;z-index:2}
+.hud > *{pointer-events:auto}
+.hud-tl{left:16px;top:14px}
+.hud-tr{right:14px;top:12px;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.hud-bl{left:14px;bottom:14px}
+.hud-br{right:14px;bottom:14px;text-align:right;font-size:13px;color:var(--muted);pointer-events:none;background:var(--fade0);border:1px solid var(--rule);border-radius:3px;padding:6px 10px}
+.hud-tl .big{font-size:15px;color:var(--muted)}
+.hud-tl .big b{font-size:30px;color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+.camseg{display:flex;background:var(--fade0);border:1px solid var(--rule);border-radius:3px;padding:2px;gap:2px}
+.camseg button{border:none;background:none;padding:4px 9px;font-size:13px;cursor:pointer;border-radius:2px;color:var(--muted)}
+.camseg button:hover{color:var(--ink)}
+.camseg button[aria-pressed=true]{background:var(--ink);color:var(--panel)}
+.modebadge{background:var(--fade0);border:1px solid var(--rule);border-radius:3px;padding:5px 10px;font-size:13px;display:flex;gap:8px;align-items:center}
+.inset{background:var(--fade0);border:1px solid var(--rule);border-radius:3px;box-shadow:var(--lift);width:236px}
+.inset canvas{display:block;width:236px;height:206px}
+.inset .cap{font-size:12px;color:var(--muted);padding:4px 10px 6px;border-top:1px solid var(--rule)}
+.legend3d span{display:inline-flex;align-items:center;gap:5px;margin-left:12px}
+.legend3d i.d{width:9px;height:9px;border-radius:50%;display:inline-block}
+
+/* bottom strip */
+#bottom{grid-area:bottom;border-top:1px solid var(--rule);background:var(--panel);display:flex;align-items:center;gap:18px;padding:0 18px;min-width:0}
+.spd{display:flex;flex-direction:column;min-width:150px}
+.spd .row1{display:flex;align-items:baseline;gap:6px}
+.spd .v{font-size:30px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1}
+.spd .u{color:var(--muted);font-size:14px}
+.spd .r{font-size:13px;color:var(--muted);margin-top:3px}
+.trk{position:relative;flex:1;min-width:120px;padding-top:12px}
+.trk .band{position:absolute;top:16px;height:10px;background:var(--crit);opacity:.14;left:34%;width:12%;border-radius:1px}
+.trk .nct{position:absolute;top:0;left:40%;transform:translateX(-50%);font-size:12px;color:var(--crit);font-style:italic}
+.trk .ticks{position:relative;height:14px;font-size:11px;color:var(--muted);margin:1px 7px 0}.trk .ticks span{position:absolute;transform:translateX(-50%)}
+.trk .band,.trk .nct{margin-left:7px}.trk .band{width:calc(12% - 5.6px)!important}
+.qbtns{display:flex;gap:4px}
+.playb{width:42px;height:42px;border-radius:50%;border:1.5px solid var(--ink);background:var(--panel);display:grid;place-items:center;cursor:pointer;flex:none}
+.playb:hover{background:var(--soft)}
+.playb svg{width:16px;height:16px}
+
+/* cards / charts */
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;height:100%;min-height:520px}
+.grid2.rows2{grid-template-rows:repeat(2,minmax(0,1fr))}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:12px 14px;display:flex;flex-direction:column;min-width:0;min-height:0}
+.card h3{font-size:17px;font-weight:600;margin:0}
+.card .cs{font-size:13px;color:var(--muted);margin:1px 0 6px}
+.card canvas{display:block;width:100%;flex:1;min-height:110px;cursor:crosshair;touch-action:pan-y}
+.leg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--muted);margin-top:4px}
+.leg span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:18px;border-top:2px solid currentColor;display:inline-block}
+.sw.d{border-top-style:dashed}
+.sw.b{height:9px;border:none;background:currentColor;opacity:.2}
+.runctl{display:flex;flex-wrap:nowrap;align-items:center;gap:6px 8px;margin:2px 0 4px;font-size:13.5px}
+.runctl .rt{display:flex;align-items:center;gap:8px;min-width:110px;flex:1 1 110px}
+.runctl .btn{padding:5px 10px;font-size:13.5px}
+.runstats{display:flex;flex-wrap:wrap;gap:0 14px;font-size:12.5px;color:var(--muted);margin-top:2px}
+.runstats b{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+table.t{border-collapse:collapse;width:100%;font-size:14.5px}
+table.t th{font-weight:600;font-variant-caps:all-small-caps;letter-spacing:.06em;font-size:15px;text-align:right;padding:6px 8px;border-bottom:1px solid var(--ink);white-space:nowrap}
+table.t td{padding:7px 8px;border-bottom:1px solid var(--rule);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+table.t th:first-child,table.t td:first-child{text-align:left}
+table.t tr.cur td{background:var(--soft);color:var(--accent);font-weight:600}
+table.t td input{width:6.5em;border:none;border-bottom:1px solid var(--rule);background:transparent;text-align:right;color:var(--accent);font-size:14.5px}
+table.t td input:focus{outline:none;border-bottom-color:var(--accent)}
+.tag{font-size:11px;font-variant-caps:all-small-caps;letter-spacing:.08em;border:1px solid var(--rule);border-radius:2px;padding:0 4px;color:var(--muted);margin-left:6px}
+.xb{border:none;background:none;color:var(--muted);cursor:pointer;font-size:16px}
+.xb:hover{color:var(--crit)}
+.twrap{overflow-x:auto}
+.mbtns{display:flex;gap:4px;flex-wrap:wrap;align-items:center;font-size:13.5px;margin-top:8px}
+
+/* working */
+.work{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.step{background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:10px 14px}
+.step h4{margin:0 0 6px;font-size:15.5px;font-weight:600}
+.step h4 i{font-style:normal;color:var(--accent);font-variant-caps:all-small-caps;letter-spacing:.1em;margin-right:8px}
+.eq{font-size:14.5px;line-height:1.85}
+.eq b{color:var(--accent);font-weight:600}
+.eq .c{color:var(--muted)}
+.vhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:6px 16px;margin-bottom:12px}
+.vhead h2{font-size:24px;font-weight:500;margin:0}
+.vhead p{margin:0;color:var(--muted);font-size:14px;max-width:70ch}
+
+/* viva */
+.viva{max-width:720px;margin:6vh auto 0}
+.vq{background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:24px 28px;animation:viewIn .5s var(--ease)}
+.vq .qn{font-variant-caps:all-small-caps;letter-spacing:.12em;color:var(--muted)}
+.vq h3{font-size:22px;font-weight:500;margin:6px 0 16px;line-height:1.3}
+.vq .opts{display:flex;flex-direction:column;gap:8px}
+.vq .opt{text-align:left;justify-content:flex-start;padding:10px 14px;font-size:15.5px;white-space:normal}
+.vq .opt.right{border-color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok)}
+.vq .opt.wrong{border-color:var(--crit);box-shadow:inset 0 0 0 1px var(--crit)}
+.vq .why{margin-top:14px;font-size:15px;line-height:1.55}
+.vdots{display:flex;gap:6px;justify-content:center;margin-top:14px}
+.vdots i{width:9px;height:9px;border-radius:50%;border:1px solid var(--muted)}
+.vdots i.r{background:var(--ok);border-color:var(--ok)} .vdots i.w{background:var(--crit);border-color:var(--crit)} .vdots i.c{border-color:var(--ink);border-width:2px}
+
+/* drawer + modal */
+.scrim{position:fixed;inset:0;background:rgba(10,12,16,.28);opacity:0;pointer-events:none;transition:opacity .3s;z-index:30}
+.scrim.on{opacity:1;pointer-events:auto}
+#settings{position:fixed;top:0;right:0;bottom:0;width:min(360px,92vw);background:var(--panel);border-left:1px solid var(--rule);z-index:31;transform:translateX(102%);transition:transform .45s var(--ease);display:flex;flex-direction:column;box-shadow:var(--lift)}
+#settings.on{transform:none}
+.dh{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--rule)}
+.dh h2{margin:0;font-size:21px;font-weight:600}
+.db{flex:1;overflow:auto;padding:6px 20px 20px}
+.swatches{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.swb{border:1px solid var(--rule);border-radius:3px;background:var(--panel);padding:6px;cursor:pointer;font-size:13px;text-align:center}
+.swb .pv{height:34px;border-radius:2px;margin-bottom:5px;display:flex;align-items:flex-end;padding:4px;gap:3px}
+.swb .pv i{height:4px;flex:1;border-radius:1px}
+.swb[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.dots{display:flex;gap:10px}
+.dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--panel);box-shadow:0 0 0 1px var(--rule);cursor:pointer}
+.dot[aria-pressed=true]{box-shadow:0 0 0 2px var(--ink)}
+.seg{display:flex;border:1px solid var(--rule);border-radius:3px;padding:2px;gap:2px}
+.seg button{flex:1;border:none;background:none;padding:6px 4px;font-size:13.5px;cursor:pointer;border-radius:2px;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--panel)}
+.sw-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--rule);font-size:14.5px;cursor:pointer}
+.tog{width:36px;height:20px;border-radius:10px;background:var(--rule);position:relative;transition:background .25s;flex:none}
+.tog::after{content:"";position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:var(--panel);transition:transform .25s var(--ease);box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.tog.on{background:var(--accent)}
+.tog.on::after{transform:translateX(16px)}
+.srow{padding:8px 0;border-bottom:1px solid var(--rule)}
+.srow .top{display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:4px}
+.srow .top output{color:var(--accent);font-variant-numeric:tabular-nums}
+#help{position:fixed;left:50%;top:50%;transform:translate(-50%,-48%) scale(.98);opacity:0;pointer-events:none;transition:all .35s var(--ease);z-index:31;background:var(--panel);border:1px solid var(--rule);border-radius:4px;box-shadow:var(--lift);width:min(560px,92vw);padding:22px 26px}
+#help.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%)}
+#help h2{margin:0 0 10px;font-weight:600;font-size:21px}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;font-size:14.5px}
+kbd.k{font-family:inherit;border:1px solid var(--rule);border-bottom-width:2px;border-radius:3px;padding:0 6px;font-size:13px;background:var(--soft);white-space:nowrap}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(10px);background:var(--ink);color:var(--panel);padding:8px 16px;border-radius:3px;font-size:14px;opacity:0;transition:all .3s;pointer-events:none;z-index:40}
+.toast.on{opacity:1;transform:translateX(-50%)}
+
+/* ===== Responsive ===== */
+@media (max-width:1240px){#app{grid-template-columns:268px minmax(0,1fr) 256px}.tab{padding:0 9px}.tab kbd{display:none}.brand span{display:none}}
+@media (max-width:980px){
+  html,body{overflow:auto;height:auto}
+  #app{position:static;display:flex;flex-direction:column;visibility:visible}
+  body:not([data-stage=app]):not([data-stage=boot]) #app{display:none}
+  #top{flex-wrap:wrap;height:auto;padding:8px 12px}
+  .tabs{order:3;width:100%;overflow-x:auto;height:40px}
+  #main{height:72vh}
+  #bottom{flex-wrap:wrap;padding:10px 14px}
+  .grid2{grid-template-columns:minmax(0,1fr);height:auto}
+  .grid2 .card canvas{min-height:220px}
+  .work{grid-template-columns:minmax(0,1fr)}
+  .bcard{width:100%;top:auto;height:62vh;border-right:none;border-top:1px solid var(--rule);transform:translateY(100%)}
+  .bhead,.bbody,.bfoot{padding-left:20px;padding-right:20px}
+  .figcap{display:none}
+  #intro{background:linear-gradient(0deg,var(--fade0) 45%,var(--fade1) 90%);align-items:flex-end;padding-bottom:28px}
+  .inset{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body data-stage="intro">
+
+<div id="stage"><div id="glwrap"><canvas id="gl" aria-label="3D model of the whirling-of-shafts apparatus. Drag to orbit, scroll to zoom."></canvas><div id="lbls"></div></div></div>
+
+<!-- ================= INTRO ================= -->
+<section id="intro" aria-label="Title">
+  <div class="intro-in">
+    <div class="kicker" style="animation-delay:.2s">Dynamics of Machines &nbsp;·&nbsp; Virtual Laboratory</div>
+    <h1 style="animation-delay:.45s">On the <em>Whirling</em> of Shafts</h1>
+    <div class="rule" style="animation-delay:.9s"></div>
+    <div class="byline" style="animation-delay:1.1s"><div><b>Raj Pandya</b></div><div>Roll No. 24BME091</div><div>Batch A-5</div></div>
+    <p class="abstract" style="animation-delay:1.4s">Every rotor carries a little unbalance. At one particular speed that unbalance makes the shaft bow out violently: the <span class="sc">critical speed</span>. This laboratory builds the apparatus in three dimensions, derives the theory step by step, and then lets you run the experiment yourself, through resonance and beyond.</p>
+    <div class="cta" style="animation-delay:1.75s">
+      <button class="btn primary big" id="bBegin" type="button">Begin the briefing <span class="arr">→</span></button>
+      <button class="linkbtn" id="bSkip" type="button">Skip to the laboratory</button>
+    </div>
+    <div class="meta-note" style="animation-delay:2.1s">Seven short chapters · about two minutes · press <kbd class="k">Enter</kbd> to begin</div>
+  </div>
+</section>
+
+<!-- ================= BRIEFING ================= -->
+<section id="brief" aria-label="Briefing">
+  <div class="bcard">
+    <div class="bhead"><span class="sc">Briefing</span><button class="linkbtn" id="bSkip2" type="button">Skip to the laboratory</button></div>
+    <div class="bbody" id="chapBody"></div>
+    <div class="bfoot">
+      <div class="prog" id="prog"></div>
+      <div class="bnav" id="bnav"></div>
+    </div>
+  </div>
+  <div class="figcap" id="figcap"></div>
+</section>
+
+<!-- ================= BOOT ================= -->
+<div id="boot" aria-live="polite"><div class="bootbox"><h3>Preparing the laboratory</h3><div id="bootlines"></div><div class="bootbar"><i id="bootbar"></i></div></div></div>
+
+<!-- ================= APP ================= -->
+<div id="app" class="pre">
+  <header id="top" data-boot>
+    <div class="brand"><b>Whirling of Shafts</b><span>Raj Pandya · 24BME091 · A-5</span></div>
+    <nav class="tabs" role="tablist" id="tabs">
+      <button class="tab" role="tab" data-v="vRig" aria-selected="true">Rig<kbd>1</kbd></button>
+      <button class="tab" role="tab" data-v="vAna" aria-selected="false">Analysis<kbd>2</kbd></button>
+      <button class="tab" role="tab" data-v="vMode" aria-selected="false">Modes<kbd>3</kbd></button>
+      <button class="tab" role="tab" data-v="vWork" aria-selected="false">Working<kbd>4</kbd></button>
+      <button class="tab" role="tab" data-v="vObs" aria-selected="false">Lab sheet<kbd>5</kbd></button>
+      <button class="tab" role="tab" data-v="vViva" aria-selected="false">Viva<kbd>6</kbd></button>
+    </nav>
+    <div class="tools">
+      <button class="btn ghost icon" id="tBrief" title="Replay the briefing" aria-label="Replay the briefing"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M4 5.5v16"/><path d="M8 7h8M8 11h6"/></svg></button>
+      <button class="btn ghost icon" id="tHelp" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h1M9.5 10h1M13 10h1M16.5 10h1M7 14h10"/></svg></button>
+      <button class="btn ghost icon" id="tFull" title="Full screen (F)" aria-label="Full screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button class="btn ghost icon" id="tSet" title="Settings (S)" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+    </div>
+  </header>
+
+  <aside id="left" data-boot aria-label="Parameters">
+    <div class="ph">Parameters</div>
+    <p class="psub">Drag a slider or type a value. Everything is recomputed at once.</p>
+    <select class="sel" id="preset" aria-label="Start from a preset">
+      <option value="">Start from a preset…</option>
+      <option value="lab">Laboratory rig, disc at mid-span</option>
+      <option value="slender">Slender shaft, light disc</option>
+      <option value="fan">Overhung fan (cantilever)</option>
+      <option value="rotor">Off-centre rotor, aluminium</option>
+      <option value="turbine">Stiff turbine-style rotor</option>
+    </select>
+    <div class="grp"><div class="gh">End conditions</div><div class="bcs" id="bcs"></div></div>
+    <div class="grp"><div class="gh">Shaft</div>
+      <div class="prm"><div class="top"><span class="sym">E</span><label for="mat">Material</label><span></span></div>
+        <select class="sel" id="mat" style="margin-top:4px"><option value="steel">Mild steel · E = 200 GPa</option><option value="alu">Aluminium 6061-T6 · E = 69 GPa</option><option value="brass">Brass · E = 100 GPa</option><option value="ti">Titanium Ti-6Al-4V · E = 114 GPa</option></select></div>
+      <div id="pShaft"></div>
+      <label class="chk"><input type="checkbox" id="sm" checked> Include the shaft's own mass (Dunkerley)</label>
+    </div>
+    <div class="grp"><div class="gh">Disc</div><div id="pDisc"></div></div>
+  </aside>
+
+  <main id="main">
+    <section class="view" id="vRig">
+      <div id="viewport"></div>
+      <div class="hud hud-tl"><div class="big"><b id="hudN">0</b> <span id="hudU">rpm</span></div><div style="font-size:13.5px;color:var(--muted)" id="hudSub">slow-motion view</div></div>
+      <div class="hud hud-tr">
+        <div class="camseg" id="camseg" role="group" aria-label="Camera">
+          <button data-cam="iso" aria-pressed="true">Iso</button><button data-cam="side">Side</button><button data-cam="axial">Axial</button><button data-cam="top">Plan</button><button data-cam="close">Disc</button>
+        </div>
+        <div class="modebadge" id="modebadge" hidden><span id="modeTxt"></span><button class="btn" id="modeOff" type="button" style="padding:2px 8px;font-size:12.5px">Back to disc</button></div>
+      </div>
+      <div class="hud hud-bl"><div class="inset"><canvas id="cvEnd"></canvas><div class="cap">End view on the disc · <i>O</i> bearing axis, <i>S</i> shaft centre, <i>G</i> mass centre</div></div></div>
+      <div class="hud hud-br"><div class="legend3d"><span><i class="d" style="background:var(--accent)"></i>whirl orbit of <i>S</i></span><span><i class="d" style="background:var(--gold)"></i><i>G</i></span><span><i class="d" style="background:var(--crit)"></i>unbalance</span></div><div style="margin-top:3px">Drag to orbit · scroll to zoom · deflection exaggerated</div></div>
+    </section>
+
+    <section class="view" id="vAna" hidden>
+      <div class="grid2 rows2">
+        <div class="card"><h3>Whirl amplitude</h3><div class="cs">Bow <i>y</i> = <i>OS</i> of the shaft at the disc</div><canvas id="chAmp"></canvas>
+          <div class="leg"><span style="color:var(--accent)"><i class="sw"></i>your ζ</span><span><i class="sw d"></i>ζ = 0.05, 0.1, 0.25, 0.5</span><span style="color:var(--crit)"><i class="sw b"></i>±15 % of <i>N</i><sub>c</sub></span></div></div>
+        <div class="card"><h3>Phase angle</h3><div class="cs">Lag φ of <i>OS</i> behind <i>SG</i></div><canvas id="chPhase"></canvas>
+          <div class="leg"><span style="color:var(--accent)"><i class="sw"></i>your ζ</span><span><i class="sw d"></i>ζ family</span></div></div>
+        <div class="card"><h3>Bearing load &amp; bending stress</h3><div class="cs">Total dynamic force on the bearings, and peak stress in the shaft</div><canvas id="chLoad"></canvas>
+          <div class="leg"><span style="color:var(--accent)"><i class="sw"></i>bearing load, N (left)</span><span style="color:var(--gold)"><i class="sw"></i>σ, MPa (right)</span></div></div>
+        <div class="card"><h3>Run-up &amp; coast-down transient</h3>
+          <div class="runctl"><div class="rt"><span>Ramp</span><input type="range" id="inT" min="0.2" max="20" step="0.1" value="2" aria-label="Ramp time"><output id="oT" style="min-width:42px;color:var(--accent)">2.0 s</output></div>
+            <button class="btn primary" id="bUp" type="button">Run-up</button><button class="btn" id="bDn" type="button">Coast-down</button><button class="btn" id="bRep" type="button" disabled>Replay in 3D</button></div>
+          <canvas id="chRun"></canvas>
+          <div class="runstats"><span>steady peak <b id="sPk">—</b></span><span>run-up peak <b id="sUp">—</b></span><span>coast-down peak <b id="sDn">—</b></span><span>RK4 steps <b id="sSt">—</b></span></div></div>
+      </div>
+    </section>
+
+    <section class="view" id="vMode" hidden>
+      <div class="grid2">
+        <div class="card"><h3>Whirling modes of the bare shaft · <span id="modeBc"></span></h3><div class="cs">First three modes, with the bow caused by the disc load (dashed)</div><canvas id="chMode"></canvas>
+          <div class="leg" id="modeLeg"></div>
+          <div class="mbtns">Animate in 3D: <button class="btn" data-m3="1">Mode 1</button><button class="btn" data-m3="2">Mode 2</button><button class="btn" data-m3="3">Mode 3</button></div></div>
+        <div class="card" style="overflow:auto"><h3>Effect of end fixing</h3><div class="cs">Same shaft and disc under all four end conditions. Your set-up is highlighted.</div>
+          <div class="twrap"><table class="t" id="cmpTbl"></table></div>
+          <p style="font-size:14px;color:var(--muted);margin:12px 0 0;line-height:1.55" id="cmpNote"></p>
+          <div class="twrap" style="margin-top:14px"><table class="t" id="betaTbl"></table></div></div>
+      </div>
+    </section>
+
+    <section class="view" id="vWork" hidden>
+      <div class="vhead"><h2>Calculation, step by step</h2><p>Every number here comes from the current parameters and speed. Change anything and the working updates.</p></div>
+      <div class="work" id="steps"></div>
+    </section>
+
+    <section class="view" id="vObs" hidden>
+      <div class="vhead"><h2>Observation sheet</h2><p>Log each set-up you test. Type the speed at which violent whirling was seen; the error against theory is worked out. Readings stay in this browser.</p></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><button class="btn primary" id="bAdd" type="button">Add current set-up</button><button class="btn" id="bCsv" type="button">Copy as CSV</button><button class="btn" id="bClr" type="button">Remove example rows</button></div>
+      <div class="card"><div class="twrap"><table class="t" id="obsTbl"></table></div></div>
+      <p style="font-size:14px;color:var(--muted);margin-top:12px" id="obsSum"></p>
+    </section>
+
+    <section class="view" id="vViva" hidden><div class="viva" id="viva"></div></section>
+  </main>
+
+  <aside id="right" data-boot aria-label="Results">
+    <div class="ph">Results</div>
+    <p class="psub">At the current speed</p>
+    <div class="regime sub" id="regime"><div class="rn" id="rgN">Sub-critical</div><p id="rgT"></p>
+      <div class="rgauge"><div class="ln"></div><div class="bd"></div><div class="nc"></div><div class="pt" id="rgPt"></div></div><div class="rgl"><span>0</span><span style="margin-left:8%"><i>N</i><sub>c</sub></span><span>2.5 <i>N</i><sub>c</sub></span></div></div>
+    <div id="ros"></div>
+  </aside>
+
+  <footer id="bottom" data-boot>
+    <button class="playb" id="bPlay" type="button" aria-label="Pause"><svg viewBox="0 0 16 16" id="playIco"><rect x="3" y="2" width="3.2" height="12" fill="currentColor"/><rect x="9.8" y="2" width="3.2" height="12" fill="currentColor"/></svg></button>
+    <div class="spd"><div class="row1"><span class="v" id="spV">0</span><span class="u" id="spU">rpm</span></div><span class="r" id="spR">r = 0.70</span></div>
+    <div class="trk"><div class="band"></div><div class="nct"><i>N</i><sub>c</sub></div><input type="range" id="inR" min="0" max="2.5" step="0.005" value="0.7" aria-label="Shaft speed as a ratio of the critical speed"><div class="ticks"><span style="left:0">0</span><span style="left:20%">0.5</span><span style="left:40%">1.0</span><span style="left:60%">1.5</span><span style="left:80%">2.0</span><span style="left:100%">2.5</span></div></div>
+    <div class="qbtns"><button class="btn" data-r="0.6"><span>0.6 <i>N</i><sub>c</sub></span></button><button class="btn" data-r="1"><span><i>N</i><sub>c</sub></span></button><button class="btn" data-r="1.8"><span>1.8 <i>N</i><sub>c</sub></span></button></div>
+    <button class="btn primary" id="bRun" type="button" title="Accelerate through the critical speed (R)">Run-up ▸</button>
+  </footer>
+</div>
+
+<!-- ================= SETTINGS ================= -->
+<div class="scrim" id="scrim"></div>
+<aside id="settings" aria-label="Settings">
+  <div class="dh"><h2>Settings</h2><button class="btn ghost icon" id="setClose" aria-label="Close settings">✕</button></div>
+  <div class="db">
+    <div class="grp"><div class="gh">Theme</div><div class="swatches" id="themes"></div></div>
+    <div class="grp"><div class="gh">Accent ink</div><div class="dots" id="accents"></div></div>
+    <div class="grp"><div class="gh">Disc finish</div><div class="seg" id="finish"></div></div>
+    <div class="grp"><div class="gh">Rig display</div><div id="toggles"></div></div>
+    <div class="grp"><div class="gh">Motion</div>
+      <div class="srow"><div class="top"><span>Deflection scale</span></div><div class="seg" id="scaleSeg"><button data-v="sqrt">Compressed (√)</button><button data-v="lin">Linear</button></div></div>
+      <div class="srow"><div class="top"><label for="exag">Exaggeration</label><output id="oExag"></output></div><input type="range" id="exag" min="0.3" max="2.5" step="0.05"></div>
+      <div class="srow"><div class="top"><label for="slow">Animation rate</label><output id="oSlow"></output></div><input type="range" id="slow" min="0.2" max="3" step="0.05"></div>
+    </div>
+    <div class="grp"><div class="gh">Speed unit</div><div class="seg" id="unitSeg"><button data-v="rpm">rpm</button><button data-v="rad">rad/s</button><button data-v="hz">Hz</button></div></div>
+    <div class="grp" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="sReplay">Replay the briefing</button><button class="btn" id="sReset">Reset settings</button></div>
+  </div>
+</aside>
+<div id="help" role="dialog" aria-label="Keyboard shortcuts">
+  <h2>Keyboard shortcuts</h2>
+  <div class="keys">
+    <span><kbd class="k">Space</kbd></span><span>Pause or resume the rig</span>
+    <span><kbd class="k">←</kbd> <kbd class="k">→</kbd></span><span>Lower or raise speed (hold Shift for big steps)</span>
+    <span><kbd class="k">C</kbd></span><span>Go to the critical speed</span>
+    <span><kbd class="k">R</kbd></span><span>Run up through the critical speed</span>
+    <span><kbd class="k">1</kbd>–<kbd class="k">6</kbd></span><span>Switch tabs</span>
+    <span><kbd class="k">V</kbd></span><span>Cycle camera views</span>
+    <span><kbd class="k">S</kbd></span><span>Settings</span>
+    <span><kbd class="k">F</kbd></span><span>Full screen</span>
+    <span><kbd class="k">?</kbd></span><span>This panel</span>
+  </div>
+  <div style="text-align:right;margin-top:16px"><button class="btn" id="helpClose">Close</button></div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(() => {
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const g=9.81, TAU=Math.PI*2;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const MAT={steel:{name:'Mild steel',E:200e9,rho:7850,Sy:250e6},alu:{name:'Aluminium 6061-T6',E:69e9,rho:2700,Sy:276e6},brass:{name:'Brass',E:100e9,rho:8500,Sy:200e6},ti:{name:'Ti-6Al-4V',E:114e9,rho:4430,Sy:880e6}};
+const BCS={ss:['pinned','pinned'],fp:['fixed','pinned'],ff:['fixed','fixed'],cf:['fixed','free']};
+const BETA={ss:[Math.PI,2*Math.PI,3*Math.PI],fp:[3.92660,7.06858,10.21018],ff:[4.73004,7.85320,10.99561],cf:[1.87510,4.69409,7.85476]};
+const LABEL={ss:'Simply supported',fp:'Fixed–pinned',ff:'Fixed–fixed',cf:'Cantilever'};
+const KF={ss:'<i>k</i> = 3<i>EIL</i> / (<i>a</i>²<i>b</i>²)',fp:'<i>k</i> = 12<i>EIL</i>³ / [<i>a</i>³<i>b</i>²(3<i>L</i> + <i>b</i>)]',ff:'<i>k</i> = 3<i>EIL</i>³ / (<i>a</i>³<i>b</i>³)',cf:'<i>k</i> = 3<i>EI</i> / <i>a</i>³'};
+const PRESETS={
+  lab:{bc:'ss',mat:'steel',d:10,L:700,m:1,a:0.5,e:0.2,z:0.03,sm:true},
+  slender:{bc:'ss',mat:'steel',d:6,L:1000,m:0.5,a:0.5,e:0.1,z:0.02,sm:true},
+  fan:{bc:'cf',mat:'steel',d:20,L:300,m:3,a:1,e:0.1,z:0.02,sm:true},
+  rotor:{bc:'fp',mat:'alu',d:16,L:1000,m:4,a:0.35,e:0.15,z:0.05,sm:true},
+  turbine:{bc:'ff',mat:'ti',d:30,L:900,m:8,a:0.5,e:0.05,z:0.04,sm:true}
+};
+const S={bc:'ss',mat:'steel',d:10,L:700,m:1,a:0.5,e:0.2,z:0.03,sm:true,r:0.55,rv:0.55,T:2,paused:false,sim:{},play:null,mode3d:0};
+const DEF={theme:'paper',accent:'prussian',finish:'steel',labels:true,orbit:true,guard:false,shadows:true,autorot:false,scale:'sqrt',exag:1,slow:1,unit:'rpm'};
+let SET={...DEF}; try{Object.assign(SET,JSON.parse(localStorage.getItem('whirl-settings-v1')||'{}'));}catch(e){}
+const saveSet=()=>{try{localStorage.setItem('whirl-settings-v1',JSON.stringify(SET));}catch(e){}};
+
+/* ---------- formatting ---------- */
+const nf=(v,dp=0)=>Number.isFinite(v)?v.toLocaleString('en-US',{minimumFractionDigits:dp,maximumFractionDigits:dp}):'—';
+function sig(v,n=3){if(!Number.isFinite(v))return'—';if(v===0)return'0';const a=Math.abs(v),ex=Math.floor(Math.log10(a));if(a>=1e5||a<1e-3){return`${(v/10**ex).toFixed(n-1)} × 10<sup>${ex}</sup>`;}return nf(v,Math.min(6,Math.max(0,n-1-ex)));}
+const sigT=(v,n=3)=>sig(v,n).replace(/ × 10<sup>(-?\d+)<\/sup>/,'e$1');
+const rpm=w=>w*60/TAU;
+function spd(w){if(SET.unit==='rad')return[nf(w,1),'rad/s'];if(SET.unit==='hz')return[nf(w/TAU,2),'Hz'];return[nf(rpm(w)),'rpm'];}
+const spdS=w=>spd(w).join(' ');
+
+/* ---------- mechanics ---------- */
+function gauss(A,b){const n=b.length;A=A.map((r,i)=>[...r,b[i]]);for(let c=0;c<n;c++){let p=c;for(let r=c+1;r<n;r++)if(Math.abs(A[r][c])>Math.abs(A[p][c]))p=r;[A[c],A[p]]=[A[p],A[c]];for(let r=0;r<n;r++){if(r===c)continue;const f=A[r][c]/A[c][c];for(let k=c;k<=n;k++)A[r][k]-=f*A[c][k];}}return A.map((r,i)=>r[n]/r[i]);}
+function solveBeam(bc,L,a){
+  const mac=(x,p)=>x>a?(x-a)**p:0,H=x=>x>=a?1:0,rows=[],rhs=[];
+  const add=(k,x)=>{if(k==='v'){rows.push([1,x,x*x,x**3]);rhs.push(-mac(x,3)/6);}if(k==='v1'){rows.push([0,1,2*x,3*x*x]);rhs.push(-mac(x,2)/2);}if(k==='v2'){rows.push([0,0,2,6*x]);rhs.push(-mac(x,1));}if(k==='v3'){rows.push([0,0,0,6]);rhs.push(-H(x));}};
+  const kinds={pinned:['v','v2'],fixed:['v','v1'],free:['v2','v3']};const[lt,rt]=BCS[bc];kinds[lt].forEach(k=>add(k,0));kinds[rt].forEach(k=>add(k,L));
+  const C=gauss(rows,rhs),v=x=>C[0]+C[1]*x+C[2]*x*x+C[3]*x**3+mac(x,3)/6,v2=x=>2*C[2]+6*C[3]*x+mac(x,1);
+  const va=v(a);let Mu=0,vmax=0;for(let i=0;i<=500;i++){const x=L*i/500;Mu=Math.max(Mu,Math.abs(v2(x)));vmax=Math.max(vmax,Math.abs(v(x)));}
+  return{d1:Math.abs(va),Mu,shape:s=>v(s*L)/va,shapeN:s=>v(s*L)/vmax*Math.sign(va)};
+}
+function compute(p=S){
+  const M=MAT[p.mat],d=p.d/1000,L=p.L/1000,e=p.e/1000,m=p.m,a=p.a*L,b=L-a;
+  const I=Math.PI*d**4/64,A=Math.PI*d*d/4,EI=M.E*I,rhoA=M.rho*A,Z=Math.PI*d**3/32;
+  const beam=solveBeam(p.bc,L,a),k=EI/beam.d1;
+  const kForm={ss:3*EI*L/(a*a*b*b),fp:12*EI*L**3/(a**3*b*b*(3*L+b)),ff:3*EI*L**3/(a**3*b**3),cf:3*EI/a**3}[p.bc];
+  const wd=Math.sqrt(k/m),delta=m*g/k,ws=BETA[p.bc].map(bl=>bl*bl*Math.sqrt(EI/(rhoA*L**4)));
+  const wdk=1/Math.sqrt(1/wd**2+1/ws[0]**2),wc=p.sm?wdk:wd,Meff=k/wc**2,c=2*p.z*Math.sqrt(k*Meff),mr=m/Meff;
+  const resp=r=>{const D=Math.hypot(1-r*r,2*p.z*r);return{y:mr*e*r*r/D,phi:Math.atan2(2*p.z*r,1-r*r)};};
+  let ypk=0,rpk=1;for(let r=0.5;r<=2.5;r+=0.0005){const yy=resp(r).y;if(yy>ypk){ypk=yy;rpk=r;}}
+  const at=r=>{const{y,phi}=resp(r),w=r*wc,FT=y*Math.hypot(k,c*w),sw=k*y*beam.Mu/Z,sg=m*g*beam.Mu/Z,OG=Math.sqrt(y*y+e*e+2*y*e*Math.cos(phi));return{r,w,y,phi,FT,sw,sg,sig:sw+sg,fos:M.Sy/(sw+sg),OG};};
+  return{M,d,L,e,m,a,b,I,A,EI,rhoA,Z,beam,k,kForm,wd,delta,ws,wdk,wc,Meff,c,mr,resp,at,ypk,rpk,Nc:rpm(wc)};
+}
+function modeShape(bc,n,s){const B=BETA[bc][n],x=B*s;if(bc==='ss')return Math.sin(x);const sg=bc==='cf'?(Math.cosh(B)+Math.cos(B))/(Math.sinh(B)+Math.sin(B)):(Math.cosh(B)-Math.cos(B))/(Math.sinh(B)-Math.sin(B));return Math.cosh(x)-Math.cos(x)-sg*(Math.sinh(x)-Math.sin(x));}
+let R=compute();
+
+/* ---------- theme tokens ---------- */
+const T={};
+function readTokens(){const cs=getComputedStyle(document.documentElement);['bg','panel','soft','ink','muted','rule','accent','crit','gold','ok','paint','bed','stage1'].forEach(n=>T[n]=cs.getPropertyValue('--'+n).trim());}
+readTokens();
+
+/* =================== 3D =================== */
+const Y0=0.95,BED=0.2,XL=-2,XR=2,SPAN=4;
+const G3={ok:false};
+function init3D(){
+  if(typeof THREE==='undefined'||!THREE.OrbitControls){$('#glwrap').classList.add('no3d');return;}
+  if(THREE.ColorManagement)THREE.ColorManagement.legacyMode=false;
+  const canvas=$('#gl');let rnd;
+  try{rnd=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});}catch(e){$('#glwrap').classList.add('no3d');return;}
+  rnd.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  rnd.shadowMap.enabled=true;rnd.shadowMap.type=THREE.PCFSoftShadowMap;
+  rnd.outputEncoding=THREE.sRGBEncoding;rnd.toneMapping=THREE.ACESFilmicToneMapping;rnd.toneMappingExposure=1.0;
+  const scene=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(30,1,0.05,200);cam.position.set(11,6.5,13);
+  const ctl=new THREE.OrbitControls(cam,canvas);ctl.enableDamping=true;ctl.dampingFactor=0.08;ctl.target.set(-0.3,Y0-0.1,0);ctl.minDistance=1.1;ctl.maxDistance=20;ctl.maxPolarAngle=Math.PI*0.49;ctl.autoRotateSpeed=0.45;
+  const pm=new THREE.PMREMGenerator(rnd);scene.environment=pm.fromScene(envScene(),0.04).texture;
+  scene.add(new THREE.HemisphereLight(0xffffff,0x9aa0a8,0.5));
+  const key=new THREE.DirectionalLight(0xffffff,1.1);key.position.set(3.5,7,4.5);key.castShadow=true;key.shadow.mapSize.set(2048,2048);
+  Object.assign(key.shadow.camera,{left:-5,right:5,top:4,bottom:-4,near:1,far:20});key.shadow.camera.updateProjectionMatrix();
+  key.shadow.bias=-0.0005;key.shadow.radius=5;scene.add(key);
+  const fill=new THREE.DirectionalLight(0xdfe6ff,0.3);fill.position.set(-5,3,-4);scene.add(fill);
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(60,60),new THREE.ShadowMaterial({opacity:0.16}));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+  Object.assign(G3,{ok:true,rnd,scene,cam,ctl,key,ground});
+  materials();buildStatic();rebuildRig();applyRigSettings();
+  canvas.addEventListener('pointerdown',()=>{G3.tween=null;});
+  canvas.addEventListener('wheel',()=>{G3.tween=null;},{passive:true});
+}
+function envScene(){
+  const s=new THREE.Scene();
+  s.add(new THREE.Mesh(new THREE.BoxGeometry(24,12,24),new THREE.MeshBasicMaterial({color:0x6f757e,side:THREE.BackSide})));
+  const pan=(w,h,x,y,z,c)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:c,side:THREE.DoubleSide}));m.position.set(x,y,z);m.lookAt(0,0,0);s.add(m);};
+  pan(10,4,0,5.8,0,0xffffff);pan(6,4,-10,1.5,2,0xeef2ff);pan(6,5,10,2,-3,0xffffff);pan(8,2.5,0,1,-11,0xd8dee6);pan(8,2.5,2,0.5,11,0xc9ced6);
+  const fl=new THREE.Mesh(new THREE.PlaneGeometry(24,24),new THREE.MeshBasicMaterial({color:0x2c2f34}));fl.rotation.x=-Math.PI/2;fl.position.y=-5.9;s.add(fl);
+  return s;
+}
+function stripeTex(){
+  const c=document.createElement('canvas');c.width=512;c.height=8;const x=c.getContext('2d');
+  x.fillStyle='#dfe3e8';x.fillRect(0,0,512,8);
+  for(let i=0;i<512;i+=2){x.fillStyle=`rgba(${120+Math.random()*60|0},${125+Math.random()*60|0},${135+Math.random()*60|0},0.18)`;x.fillRect(i,0,1,8);}
+  x.fillStyle='#2a2e35';x.fillRect(0,0,22,8);x.fillStyle='rgba(40,44,52,.35)';x.fillRect(256,0,6,8);
+  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t;
+}
+function materials(){
+  const M={};
+  M.paint=new THREE.MeshStandardMaterial({color:T.paint,metalness:0.25,roughness:0.48});
+  M.bed=new THREE.MeshStandardMaterial({color:T.bed,metalness:0.3,roughness:0.78});
+  M.ways=new THREE.MeshStandardMaterial({color:0xb4bac2,metalness:0.95,roughness:0.24});
+  M.dark=new THREE.MeshStandardMaterial({color:0x1b1d21,metalness:0.4,roughness:0.6});
+  M.bolt=new THREE.MeshStandardMaterial({color:0xaab1b9,metalness:1,roughness:0.22});
+  M.shaft=new THREE.MeshStandardMaterial({color:0xffffff,map:stripeTex(),metalness:0.95,roughness:0.2});
+  M.disc=new THREE.MeshStandardMaterial({color:0xc9ced4,metalness:0.95,roughness:0.26});
+  M.unb=new THREE.MeshStandardMaterial({color:T.crit,metalness:0.2,roughness:0.4,emissive:new THREE.Color(T.crit),emissiveIntensity:0});
+  M.g=new THREE.MeshBasicMaterial({color:T.gold});
+  M.guard=new THREE.MeshPhysicalMaterial({color:0xffffff,transparent:true,opacity:0.08,roughness:0.05,metalness:0,depthWrite:false});
+  M.copper=new THREE.MeshStandardMaterial({color:0xb87333,metalness:1,roughness:0.3});
+  G3.M=M;
+}
+function mk(parent,geo,mat,x,y,z,shadow=true){const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=shadow;m.receiveShadow=true;parent.add(m);return m;}
+const box=(p,w,h,d,mat,x,y,z)=>mk(p,new THREE.BoxGeometry(w,h,d),mat,x,y,z);
+function cyl(p,r1,r2,len,mat,x,y,z,seg=40,axis='x'){const geo=new THREE.CylinderGeometry(r1,r2,len,seg);if(axis==='x')geo.rotateZ(Math.PI/2);return mk(p,geo,mat,x,y,z);}
+function buildStatic(){
+  const s=new THREE.Group(),M=G3.M;G3.scene.add(s);G3.static=s;
+  box(s,6.6,0.16,1.25,M.bed,-0.55,0.12,0);
+  [-3.6,-0.55,2.5].forEach(x=>box(s,0.5,0.04,1.38,M.bed,x,0.02,0));
+  [0.38,-0.38].forEach(z=>box(s,6.4,0.025,0.12,M.ways,-0.55,BED+0.0125,z));
+  [0.13,-0.13].forEach(z=>box(s,6.4,0.006,0.04,M.dark,-0.55,BED+0.001,z));
+  // motor
+  box(s,0.58,0.48,0.42,M.paint,-3.05,BED+0.24,0);
+  cyl(s,0.27,0.27,0.72,M.paint,-3.05,Y0,0,56);
+  for(let i=0;i<11;i++)cyl(s,0.292,0.292,0.022,M.paint,-3.36+i*0.062,Y0,0,56);
+  cyl(s,0.23,0.27,0.08,M.paint,-3.45,Y0,0,56);cyl(s,0.27,0.21,0.07,M.paint,-2.655,Y0,0,56);
+  cyl(s,0.21,0.21,0.1,M.dark,-3.53,Y0,0,56);
+  box(s,0.24,0.15,0.2,M.paint,-3.0,Y0+0.33,0);box(s,0.18,0.02,0.16,M.dark,-3.0,Y0+0.41,0);
+  cyl(s,0.035,0.035,0.2,M.bolt,-2.53,Y0,0,24);
+  cyl(s,0.078,0.078,0.09,M.bolt,-2.47,Y0,0,40);cyl(s,0.072,0.072,0.03,M.dark,-2.41,Y0,0,40);cyl(s,0.078,0.078,0.09,M.bolt,-2.35,Y0,0,40);
+  // tachometer disc on coupling
+  const ag=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-2.75,Y0,0),new THREE.Vector3(2.75,Y0,0)]);
+  G3.axisMat=new THREE.LineDashedMaterial({color:T.muted,dashSize:0.07,gapSize:0.045,transparent:true,opacity:0.85});
+  const al=new THREE.Line(ag,G3.axisMat);al.computeLineDistances();s.add(al);G3.axisLine=al;
+  const gg=new THREE.BoxGeometry(4.75,1.22,1.08);const guard=new THREE.Mesh(gg,M.guard);guard.position.set(-0.05,BED+0.61,0);
+  G3.guardEdge=new THREE.LineBasicMaterial({color:T.muted,transparent:true,opacity:0.4});guard.add(new THREE.LineSegments(new THREE.EdgesGeometry(gg),G3.guardEdge));s.add(guard);G3.guard=guard;
+  const pts=[];for(let i=0;i<=160;i++){const t=i/160*TAU;pts.push(new THREE.Vector3(0,Math.cos(t),Math.sin(t)));}
+  G3.orbitMat=new THREE.LineBasicMaterial({color:T.accent,transparent:true,opacity:0.85});
+  G3.orbit=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),G3.orbitMat);G3.scene.add(G3.orbit);
+  G3.arF=new THREE.ArrowHelper(new THREE.Vector3(0,1,0),new THREE.Vector3(),0.5,new THREE.Color(T.gold).getHex(),0.1,0.07);
+  G3.arK=new THREE.ArrowHelper(new THREE.Vector3(0,-1,0),new THREE.Vector3(),0.4,new THREE.Color(T.accent).getHex(),0.1,0.07);
+  G3.arF.visible=G3.arK.visible=false;G3.scene.add(G3.arF,G3.arK);
+}
+function disposeTree(o){o.traverse(c=>{if(c.geometry)c.geometry.dispose();});}
+let rigKey='';
+function rebuildRig(force){
+  if(!G3.ok)return;
+  const key=[S.bc,S.d,S.L,S.m,S.a].join('|');
+  if(!force&&key===rigKey){updateLUT();return;}rigKey=key;
+  if(G3.rig){G3.scene.remove(G3.rig);disposeTree(G3.rig);}
+  const r=new THREE.Group(),M=G3.M;G3.rig=r;G3.scene.add(r);
+  const[lt,rt]=BCS[S.bc];pedestal(r,lt,XL,-1);pedestal(r,rt,XR,1);
+  const rad=clamp(S.d/S.L*SPAN/2,0.017,0.085),x0=-2.33,x1=rt==='free'?XR:XR+0.15;
+  const geo=new THREE.CylinderGeometry(rad,rad,x1-x0,32,180,false);geo.rotateZ(Math.PI/2);geo.translate((x0+x1)/2,Y0,0);
+  const sh=new THREE.Mesh(geo,M.shaft);sh.castShadow=true;sh.frustumCulled=false;r.add(sh);G3.shaft=sh;G3.base=Float32Array.from(geo.attributes.position.array);
+  M.shaft.map.repeat.set(1,1);
+  if(rt==='free'){cyl(r,rad*1.02,rad*1.02,0.012,M.dark,XR,Y0,0,32);}
+  const disc=new THREE.Group();
+  const Rd=clamp(0.27+S.m*0.032,0.27,0.6),th=clamp(0.05+S.m*0.012,0.05,0.16);
+  cyl(disc,Rd,Rd,th,M.disc,0,0,0,96);
+  cyl(disc,Rd*0.985,Rd*0.985,th+0.006,M.disc,0,0,0,96);
+  [1,-1].forEach(sd=>{const t=new THREE.Mesh(new THREE.TorusGeometry(Rd*0.78,0.005,8,120),M.dark);t.rotation.y=Math.PI/2;t.position.x=sd*(th/2+0.003);disc.add(t);
+    const t2=new THREE.Mesh(new THREE.TorusGeometry(Rd*0.36,0.004,8,80),M.dark);t2.rotation.y=Math.PI/2;t2.position.x=sd*(th/2+0.003);disc.add(t2);});
+  cyl(disc,0.08,0.08,th+0.1,M.bolt,0,0,0,40);
+  for(let i=0;i<6;i++){const an=i/6*TAU+Math.PI/6;cyl(disc,0.026,0.026,th+0.008,M.dark,0,Math.cos(an)*Rd*0.57,Math.sin(an)*Rd*0.57,20);}
+  for(let i=0;i<3;i++){const an=i/3*TAU;cyl(disc,0.012,0.012,th+0.12,M.bolt,0,Math.cos(an)*0.055,Math.sin(an)*0.055,8);}
+  const ub=box(disc,th+0.03,0.07,0.075,M.unb,0,Rd*0.86,0);G3.unbMesh=ub;
+  const gm=mk(disc,new THREE.SphereGeometry(0.03,24,16),M.g,0,0.05,0,false);G3.gm=gm;
+  const glg=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),new THREE.Vector3(0,1,0)]);
+  const gl=new THREE.Line(glg,new THREE.LineBasicMaterial({color:T.gold}));gl.position.x=th/2+0.06;disc.add(gl);G3.gline=gl;gm.position.x=th/2+0.06;
+  const sDot=mk(disc,new THREE.SphereGeometry(0.018,16,12),new THREE.MeshBasicMaterial({color:T.accent}),th/2+0.06,0,0,false);G3.sDot=sDot;
+  G3.xa=XL+S.a*SPAN;disc.position.set(G3.xa,Y0,0);r.add(disc);G3.disc=disc;G3.Rd=Rd;G3.th=th;
+  updateLUT();applyRigSettings();
+}
+function pedestal(r,type,x,side){
+  const M=G3.M;
+  if(type==='pinned'){
+    box(r,0.38,0.05,0.64,M.paint,x,BED+0.025,0);
+    [0.25,-0.25].forEach(z=>cyl(r,0.026,0.026,0.03,M.bolt,x,BED+0.065,z,6,'y'));
+    const h=Y0-0.09-(BED+0.05);box(r,0.2,h,0.3,M.paint,x,BED+0.05+h/2,0);
+    cyl(r,0.165,0.165,0.2,M.paint,x,Y0,0,56);
+    cyl(r,0.09,0.09,0.205,M.bolt,x,Y0,0,48);
+    cyl(r,0.062,0.062,0.21,M.dark,x,Y0,0,40);
+    cyl(r,0.014,0.014,0.07,M.copper,x,Y0+0.19,0,12,'y');
+  }else if(type==='fixed'){
+    const h=Y0+0.22-BED;box(r,0.32,h,0.52,M.paint,x+side*0.02,BED+h/2,0);
+    box(r,0.325,0.008,0.525,M.dark,x+side*0.02,Y0,0);
+    [0.17,-0.17].forEach(z=>cyl(r,0.038,0.038,0.045,M.bolt,x+side*0.02,Y0+0.24,z,6,'y'));
+    [0.17,-0.17].forEach(z=>cyl(r,0.03,0.03,0.04,M.bolt,x+side*0.02,BED+0.03,z+Math.sign(z)*0.1,6,'y'));
+    cyl(r,0.06,0.06,0.33,M.dark,x+side*0.02,Y0,0,32);
+  }
+}
+function updateLUT(){
+  const L=new Float32Array(201);for(let i=0;i<=200;i++)L[i]=R.beam.shape(i/200);G3.lut=L;
+  if(S.mode3d){const n=S.mode3d-1,ML=new Float32Array(201);let mx=0;for(let i=0;i<=200;i++){ML[i]=modeShape(S.bc,n,i/200);if(Math.abs(ML[i])>Math.abs(mx))mx=ML[i];}for(let i=0;i<=200;i++)ML[i]/=mx;G3.mlut=ML;}
+}
+function applyRigSettings(){
+  if(!G3.ok)return;const M=G3.M;
+  const fin={steel:[0xc9ced4,0.95,0.26],brass:[0xc8a24c,0.95,0.3],oxide:[0x2c2e33,0.6,0.42]}[SET.finish]||[0xc9ced4,0.95,0.26];
+  M.disc.color.setHex(fin[0]);M.disc.metalness=fin[1];M.disc.roughness=fin[2];
+  M.paint.color.set(T.paint);M.bed.color.set(T.bed);M.unb.color.set(T.crit);M.unb.emissive.set(T.crit);M.g.color.set(T.gold);
+  G3.axisMat.color.set(T.muted);G3.orbitMat.color.set(T.accent);G3.guardEdge.color.set(T.muted);
+  if(G3.sDot)G3.sDot.material.color.set(T.accent);if(G3.gline)G3.gline.material.color.set(T.gold);
+  G3.arF.setColor(new THREE.Color(T.gold));G3.arK.setColor(new THREE.Color(T.accent));
+  G3.guard.visible=SET.guard;G3.rnd.shadowMap.enabled=SET.shadows;G3.key.castShadow=SET.shadows;G3.ground.visible=SET.shadows;
+  G3.scene.traverse(o=>{if(o.material&&o.material.isMaterial)o.material.needsUpdate=true;});
+  G3.ground.material.opacity=SET.theme==='paper'?0.16:0.32;
+  G3.rnd.toneMappingExposure=SET.theme==='paper'?1.0:0.92;
+  G3.ctl.autoRotate=SET.autorot;
+}
+function camPreset(n){const xa=G3.xa??0;return({
+  iso:{p:[4.3,2.75,5.7],t:[-0.35,Y0-0.15,0]},side:{p:[-0.35,Y0+0.3,7.4],t:[-0.35,Y0-0.05,0]},
+  axial:{p:[xa+2.7,Y0+0.5,1.0],t:[xa,Y0,0]},top:{p:[-0.35,7.6,0.5],t:[-0.35,Y0,0]},
+  close:{p:[xa+0.95,Y0+0.5,1.3],t:[xa,Y0,0]},far:{p:[11,6.5,13],t:[-0.3,Y0,0]},hero:{p:[5.4,2.5,6.9],t:[-0.5,Y0-0.1,0]}})[n];}
+function flyTo(n,dur=1600){if(!G3.ok)return;const c=JSON.parse(JSON.stringify(camPreset(n)));const stg=document.body.dataset.stage;if((stg==='brief'||stg==='intro')&&innerWidth>980&&['iso','hero','side','top'].includes(n)){for(let i=0;i<3;i++)c.p[i]=c.t[i]+(c.p[i]-c.t[i])*1.32;}G3.tween={p0:G3.cam.position.clone(),t0:G3.ctl.target.clone(),p1:new THREE.Vector3(...c.p),t1:new THREE.Vector3(...c.t),s:performance.now(),d:dur};G3.camName=n;$$('#camseg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.cam===n));}
+function size3D(){if(!G3.ok)return;const w=$('#glwrap').clientWidth,h=$('#glwrap').clientHeight;if(!w||!h)return;G3.rnd.setSize(w,h,false);G3.cam.aspect=w/h;viewOffset();}
+function viewOffset(){if(!G3.ok)return;const w=$('#glwrap').clientWidth,h=$('#glwrap').clientHeight,st=document.body.dataset.stage,wide=innerWidth>980;let off=0;
+  if(wide&&st==='intro')off=-w*0.2;else if(wide&&st==='brief')off=-$('.bcard').offsetWidth/2;
+  if(off)G3.cam.setViewOffset(w,h,off,0,w,h);else G3.cam.clearViewOffset();G3.cam.updateProjectionMatrix();}
+function mountGL(el){el.appendChild($('#glwrap'));requestAnimationFrame(size3D);}
+
+/* labels */
+const LB={};['o','s','g'].forEach(k=>{const d=document.createElement('div');d.className='l3 '+k;d.textContent=k.toUpperCase();$('#lbls').appendChild(d);LB[k]=d;});
+const V3=typeof THREE!=='undefined'?new THREE.Vector3():null;
+function placeLabel(el,vec,dx,dy){V3.copy(vec).project(G3.cam);const w=$('#glwrap').clientWidth,h=$('#glwrap').clientHeight;const x=(V3.x+1)/2*w+dx,y=(1-V3.y)/2*h+dy;el.style.transform=`translate(${x}px,${y}px) translate(-50%,-50%)`;el.style.opacity=V3.z<1?1:0;}
+
+/* per-frame visual state */
+let psi=0;
+function visState(){
+  if(S.play){const p=S.play,t=Math.min(1,(performance.now()-p.t0)/p.dur),sm=p.s[Math.min(p.s.length-1,Math.floor(t*(p.s.length-1)))];
+    let ph=sm.th-Math.atan2(sm.y,sm.x);ph=((ph%TAU)+TAU)%TAU;if(ph>Math.PI*1.5)ph-=TAU;
+    if(t>=1){const end=p.dir==='up'?2.2:0;S.play=null;setR(end,true);toast(p.dir==='up'?'Run-up complete. The speed is now 2.2 Nc.':'Coast-down complete.');}
+    return{y:sm.a,phi:ph,w:sm.w,r:sm.w/R.wc,yref:Math.max(p.max,R.ypk*0.3),play:true};}
+  const A=R.resp(S.rv);return{y:A.y,phi:A.phi,w:S.rv*R.wc,r:S.rv,yref:R.ypk,play:false};
+}
+function dispA(y,yref){const q=Math.max(0,y/yref);const v=SET.scale==='sqrt'?Math.sqrt(Math.min(q,1.6)):Math.min(q,1.6);return 0.2*SET.exag*v;}
+function step3D(now,st){
+  if(!G3.ok)return;
+  if(G3.tween){const tw=G3.tween,k=Math.min(1,(now-tw.s)/tw.d),e=k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;G3.cam.position.lerpVectors(tw.p0,tw.p1,e);G3.ctl.target.lerpVectors(tw.t0,tw.t1,e);if(k>=1)G3.tween=null;}
+  const md=S.mode3d,A=md?0.17*SET.exag:dispA(st.y,st.yref),al=md?psi:psi-st.phi,ca=Math.cos(al),sa=Math.sin(al);
+  const pos=G3.shaft.geometry.attributes.position.array,b=G3.base,lut=md?G3.mlut:G3.lut;
+  for(let i=0;i<pos.length;i+=3){const s=(b[i]-XL)/SPAN;let f=0;if(s>0&&s<=1.0005)f=lut[Math.round(Math.min(1,s)*200)];pos[i+1]=b[i+1]+f*A*ca;pos[i+2]=b[i+2]+f*A*sa;}
+  G3.shaft.geometry.attributes.position.needsUpdate=true;
+  G3.M.shaft.map.offset.x=-(psi/TAU)%1;
+  const d=G3.disc;d.visible=!md;d.position.set(G3.xa,Y0+A*ca,A*sa);d.rotation.x=psi;
+  const eV=clamp(dispA(R.e,st.yref),0.045,G3.Rd*0.7);G3.gm.position.y=eV;G3.gline.scale.y=eV;
+  G3.orbit.visible=SET.orbit&&!md&&A>0.003;G3.orbit.position.set(G3.xa,Y0,0);G3.orbit.scale.set(1,A,A);
+  if(G3.highlight){const k=Math.sin(now/180)**2;G3.gm.scale.setScalar(1+k*0.5);G3.M.unb.emissiveIntensity=0.25+0.75*k;}else{G3.gm.scale.setScalar(1);G3.M.unb.emissiveIntensity=0;}
+  if(G3.arrows&&!md){const Sw=d.position.clone(),Gw=d.localToWorld(G3.gm.position.clone()),og=new THREE.Vector3(0,Gw.y-Y0,Gw.z).normalize();
+    G3.arF.position.copy(Gw);G3.arF.setDirection(og);G3.arF.setLength(0.55,0.11,0.075);
+    const inw=new THREE.Vector3(0,-(Sw.y-Y0),-Sw.z);if(inw.lengthSq()<1e-8)inw.set(0,-1,0);inw.normalize();G3.arK.position.copy(Sw).addScaledVector(inw,-0.0);G3.arK.setDirection(inw);G3.arK.setLength(0.42,0.11,0.075);
+    G3.arF.visible=G3.arK.visible=true;}else G3.arF.visible=G3.arK.visible=false;
+  G3.ctl.update();G3.rnd.render(G3.scene,G3.cam);
+  const showL=SET.labels&&!md&&document.body.dataset.stage!=='intro';
+  ['o','s','g'].forEach(k=>LB[k].hidden=!showL);
+  if(showL){placeLabel(LB.o,new THREE.Vector3(G3.xa,Y0,0),-16,18);placeLabel(LB.s,d.position,-18,-16);placeLabel(LB.g,d.localToWorld(G3.gm.position.clone()),18,-10);}
+}
+
+/* =================== 2D: end view inset =================== */
+function prep(cv){const dpr=window.devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);}const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);return{ctx,w,h};}
+const SERIF='"STIX Two Text", Cambria, "Times New Roman", serif';
+function drawEnd(st){
+  const cv=$('#cvEnd');if(!cv.clientWidth)return;const{ctx,w,h}=prep(cv);ctx.clearRect(0,0,w,h);
+  const cx=w*0.6,cy=h*0.52,discR=Math.min(w,h)*0.3,reach=Math.min(w,h)*0.17;
+  const e=R.e,y=st.y,sc=reach/Math.max(st.play?st.yref+e:y+e,1e-12),angS=psi-st.phi;
+  const Sx=cx+y*sc*Math.cos(angS),Sy=cy-y*sc*Math.sin(angS),Gx=Sx+e*sc*Math.cos(psi),Gy=Sy-e*sc*Math.sin(psi);
+  ctx.strokeStyle=T.muted;ctx.lineWidth=0.8;ctx.setLineDash([7,3,2,3]);ctx.beginPath();ctx.moveTo(cx-discR-14,cy+.5);ctx.lineTo(cx+discR+14,cy+.5);ctx.moveTo(cx+.5,cy-discR-14);ctx.lineTo(cx+.5,cy+discR+14);ctx.stroke();ctx.setLineDash([]);
+  if(y*sc>1){ctx.strokeStyle=T.accent;ctx.globalAlpha=.5;ctx.setLineDash([2,3]);ctx.beginPath();ctx.arc(cx,cy,y*sc,0,TAU);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;}
+  ctx.fillStyle=T.soft;ctx.globalAlpha=.85;ctx.beginPath();ctx.arc(Sx,Sy,discR,0,TAU);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=T.ink;ctx.lineWidth=1.1;ctx.stroke();
+  for(let i=0;i<6;i++){const an=psi+i*Math.PI/3+Math.PI/6;ctx.beginPath();ctx.arc(Sx+discR*0.57*Math.cos(an),Sy-discR*0.57*Math.sin(an),2.6,0,TAU);ctx.stroke();}
+  ctx.fillStyle=T.crit;ctx.save();ctx.translate(Sx+discR*0.86*Math.cos(psi),Sy-discR*0.86*Math.sin(psi));ctx.rotate(-psi);ctx.fillRect(-3,-5,6,10);ctx.restore();
+  ctx.fillStyle=T.ink;ctx.beginPath();ctx.arc(Sx,Sy,4,0,TAU);ctx.fill();
+  ctx.lineWidth=2;ctx.strokeStyle=T.accent;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(Sx,Sy);ctx.stroke();
+  ctx.strokeStyle=T.gold;ctx.beginPath();ctx.moveTo(Sx,Sy);ctx.lineTo(Gx,Gy);ctx.stroke();
+  if(y*sc>6&&st.phi>0.03){ctx.strokeStyle=T.crit;ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(Sx,Sy,13,-psi,-angS);ctx.stroke();}
+  ctx.fillStyle=T.panel;ctx.beginPath();ctx.arc(Gx,Gy,5.5,0,TAU);ctx.fill();ctx.fillStyle=T.gold;[0,2].forEach(q=>{ctx.beginPath();ctx.moveTo(Gx,Gy);ctx.arc(Gx,Gy,5.5,q*Math.PI/2-psi,(q+1)*Math.PI/2-psi);ctx.closePath();ctx.fill();});ctx.strokeStyle=T.ink;ctx.lineWidth=1;ctx.beginPath();ctx.arc(Gx,Gy,5.5,0,TAU);ctx.stroke();
+  ctx.fillStyle=T.ink;ctx.beginPath();ctx.arc(cx,cy,2.5,0,TAU);ctx.fill();
+  ctx.font=`italic 600 13px ${SERIF}`;ctx.textAlign='center';ctx.textBaseline='middle';
+  const off=(ax,ay,bx,by,dd)=>{const dx=ax-bx,dy=ay-by,l=Math.hypot(dx,dy)||1;return[ax+dx/l*dd,ay+dy/l*dd];};
+  ctx.fillStyle=T.ink;ctx.fillText('O',cx-9,cy+11);
+  const[s2x,s2y]=y*sc>10?off(Sx,Sy,Gx,Gy,13):[Sx-12,Sy-11];ctx.fillStyle=T.accent;ctx.fillText('S',s2x,s2y);
+  const[g2x,g2y]=off(Gx,Gy,Sx,Sy,13);ctx.fillStyle=T.gold;ctx.fillText('G',g2x,g2y);
+  ctx.textAlign='left';ctx.textBaseline='top';ctx.font=`12.5px ${SERIF}`;
+  const OG=Math.sqrt(y*y+e*e+2*y*e*Math.cos(st.phi));
+  [[`OS = ${sigT(y*1000)} mm`,T.accent],[`SG = ${sigT(e*1000)} mm`,T.gold],[`OG = ${sigT(OG*1000)} mm`,T.ink],[`φ = ${nf(st.phi*180/Math.PI,1)}°`,T.crit]].forEach(([t,c],i)=>{ctx.fillStyle=c;ctx.fillText(t,8,7+i*15);});
+}
+
+/* =================== Charts =================== */
+function niceStep(range,n){const raw=range/n,p=10**Math.floor(Math.log10(raw)),f=raw/p;return(f<1.5?1:f<3?2:f<7?5:10)*p;}
+function interp(pts,x){if(!pts.length||x<pts[0][0]||x>pts[pts.length-1][0])return null;let lo=0,hi=pts.length-1;while(hi-lo>1){const m=(lo+hi)>>1;if(pts[m][0]<=x)lo=m;else hi=m;}const[x0,y0]=pts[lo],[x1,y1]=pts[hi];return x1===x0?y0:y0+(y1-y0)*(x-x0)/(x1-x0);}
+function drawChart(cv,o){
+  cv._o=o;if(!cv.clientWidth)return;const{ctx,w,h}=prep(cv);ctx.clearRect(0,0,w,h);
+  const pad={l:52,r:o.y2?50:12,t:10,b:36},pw=w-pad.l-pad.r,ph=h-pad.t-pad.b;
+  const X=x=>pad.l+(x-o.x[0])/(o.x[1]-o.x[0])*pw,Y=(y,ax)=>{const r=ax?o.y2:o.y;return pad.t+ph-(y-r[0])/(r[1]-r[0])*ph;};
+  const rev=cv._rev??1;
+  if(o.band){ctx.fillStyle=T.crit;ctx.globalAlpha=.09;const b0=Math.max(X(o.band[0]),pad.l),b1=Math.min(X(o.band[1]),pad.l+pw);ctx.fillRect(b0,pad.t,b1-b0,ph);ctx.globalAlpha=1;}
+  ctx.font=`12px ${SERIF}`;ctx.lineWidth=1;
+  const xs=niceStep(o.x[1]-o.x[0],o.xn||6),ys=niceStep(o.y[1]-o.y[0],5);
+  ctx.textAlign='center';ctx.textBaseline='top';
+  for(let x0=Math.ceil(o.x[0]/xs-1e-9)*xs;x0<=o.x[1]+1e-9;x0+=xs){const x=Math.abs(x0)<xs*1e-6?0:x0,px=Math.round(X(x))+.5;ctx.strokeStyle=T.rule;ctx.globalAlpha=.6;ctx.beginPath();ctx.moveTo(px,pad.t);ctx.lineTo(px,pad.t+ph);ctx.stroke();ctx.globalAlpha=1;ctx.strokeStyle=T.ink;ctx.beginPath();ctx.moveTo(px,pad.t+ph);ctx.lineTo(px,pad.t+ph-5);ctx.stroke();ctx.fillStyle=T.muted;ctx.fillText(o.xf?o.xf(x):nf(x),px,pad.t+ph+5);}
+  ctx.textAlign='right';ctx.textBaseline='middle';
+  for(let y0=Math.ceil(o.y[0]/ys-1e-9)*ys;y0<=o.y[1]+1e-9;y0+=ys){const y=Math.abs(y0)<ys*1e-6?0:y0,py=Math.round(Y(y))+.5;ctx.strokeStyle=T.rule;ctx.globalAlpha=.6;ctx.beginPath();ctx.moveTo(pad.l,py);ctx.lineTo(pad.l+pw,py);ctx.stroke();ctx.globalAlpha=1;ctx.strokeStyle=T.ink;ctx.beginPath();ctx.moveTo(pad.l,py);ctx.lineTo(pad.l+5,py);ctx.stroke();ctx.fillStyle=T.muted;ctx.fillText(o.yf?o.yf(y):nf(y,ys<1?(ys<0.1?2:1):0),pad.l-6,py);}
+  if(o.y2){const ys2=niceStep(o.y2[1]-o.y2[0],5);ctx.textAlign='left';ctx.fillStyle=T.gold;for(let y=0;y<=o.y2[1]+1e-9;y+=ys2)ctx.fillText(nf(y,ys2<1?1:0),pad.l+pw+6,Y(y,1));}
+  ctx.strokeStyle=T.ink;ctx.lineWidth=1;ctx.strokeRect(pad.l+.5,pad.t+.5,pw,ph);
+  ctx.fillStyle=T.ink;ctx.font=`italic 13px ${SERIF}`;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(o.xl||'',pad.l+pw/2,h-1);
+  ctx.save();ctx.translate(11,pad.t+ph/2);ctx.rotate(-Math.PI/2);ctx.textBaseline='middle';ctx.fillText(o.yl||'',0,0);ctx.restore();
+  if(o.y2l){ctx.save();ctx.translate(w-9,pad.t+ph/2);ctx.rotate(Math.PI/2);ctx.textBaseline='middle';ctx.fillStyle=T.gold;ctx.fillText(o.y2l,0,0);ctx.restore();}
+  ctx.save();ctx.beginPath();ctx.rect(pad.l,pad.t,pw*rev,ph);ctx.clip();
+  (o.vlines||[]).forEach(v=>{ctx.strokeStyle=v.color;ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(X(v.x)+.5,pad.t);ctx.lineTo(X(v.x)+.5,pad.t+ph);ctx.stroke();ctx.setLineDash([]);if(v.label){ctx.fillStyle=v.color;ctx.font=`italic 12.5px ${SERIF}`;ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText(v.label,X(v.x)+4,pad.t+3);}});
+  o.series.forEach(s=>{if(!s.pts.length)return;ctx.strokeStyle=s.color;ctx.lineWidth=s.w||1.8;ctx.globalAlpha=s.alpha||1;ctx.setLineDash(s.dash||[]);ctx.lineJoin='round';ctx.beginPath();s.pts.forEach(([x,y],i)=>{const px=X(x),py=Y(y,s.ax);i?ctx.lineTo(px,py):ctx.moveTo(px,py);});ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;});
+  (o.points||[]).forEach(p=>{const px=X(p.x),py=Y(p.y,p.ax);ctx.fillStyle=T.panel;ctx.strokeStyle=p.color;ctx.lineWidth=2;ctx.beginPath();ctx.arc(px,py,5,0,TAU);ctx.fill();ctx.stroke();});
+  ctx.restore();
+  if(cv._hx!=null&&cv._hx>=pad.l&&cv._hx<=pad.l+pw){
+    const hx=cv._hx,xv=o.x[0]+(hx-pad.l)/pw*(o.x[1]-o.x[0]);ctx.strokeStyle=T.muted;ctx.beginPath();ctx.moveTo(hx+.5,pad.t);ctx.lineTo(hx+.5,pad.t+ph);ctx.stroke();
+    const lines=[o.hx?o.hx(xv):nf(xv)];o.series.filter(s=>s.hl).forEach(s=>{const yv=interp(s.pts,xv);if(yv!=null){lines.push(`${s.hl}: ${s.hf?s.hf(yv):nf(yv,2)}`);ctx.fillStyle=s.color;ctx.beginPath();ctx.arc(hx,Y(yv,s.ax),3.2,0,TAU);ctx.fill();}});
+    ctx.font=`12.5px ${SERIF}`;const tw=Math.max(...lines.map(l=>ctx.measureText(l).width))+16,th=lines.length*16+10;let tx=hx+10;if(tx+tw>pad.l+pw)tx=hx-10-tw;
+    ctx.fillStyle=T.panel;ctx.strokeStyle=T.ink;ctx.fillRect(tx,pad.t+6,tw,th);ctx.strokeRect(tx+.5,pad.t+6.5,tw,th);ctx.fillStyle=T.ink;ctx.textAlign='left';ctx.textBaseline='top';lines.forEach((l,i)=>ctx.fillText(l,tx+8,pad.t+11+i*16));}
+}
+function hoverable(cv){const set=e=>{const r=cv.getBoundingClientRect();cv._hx=e.clientX-r.left;if(cv._o)drawChart(cv,cv._o);};cv.addEventListener('pointermove',set);cv.addEventListener('pointerdown',set);cv.addEventListener('pointerleave',()=>{cv._hx=null;if(cv._o)drawChart(cv,cv._o);});}
+const CH={amp:$('#chAmp'),phase:$('#chPhase'),load:$('#chLoad'),run:$('#chRun'),mode:$('#chMode')};Object.values(CH).forEach(hoverable);
+function curve(fn,rmax=2.5,n=500){const o=[];for(let i=0;i<=n;i++){const r=rmax*i/n;o.push([r*R.Nc,fn(r)]);}return o;}
+const ZF=[0.05,0.1,0.25,0.5];
+function respZ(z,r){const D=Math.hypot(1-r*r,2*z*r);return{y:R.mr*R.e*r*r/D,phi:Math.atan2(2*z*r,1-r*r)};}
+function drawAna(){
+  const Nc=R.Nc,xr=[0,2.5*Nc],band=[0.85*Nc,1.15*Nc],xf=x=>nf(x),hx=x=>`N = ${nf(x)} rpm  (r = ${nf(x/Nc,2)})`,cur=S.rv;
+  const fam=f=>ZF.filter(z=>Math.abs(z-S.z)>0.004).map(z=>({pts:curve(r=>f(respZ(z,r))),color:T.muted,w:1,dash:[5,4],alpha:.8}));
+  drawChart(CH.amp,{x:xr,y:[0,R.ypk*1000*1.12],xl:'shaft speed  N  (rpm)',yl:'y  (mm)',xf,hx,band,yf:v=>sigT(v),series:[...fam(q=>q.y*1000),{pts:curve(r=>R.resp(r).y*1000),color:T.accent,w:2.2,hl:'y',hf:v=>`${sigT(v)} mm`}],vlines:[{x:Nc,color:T.crit,label:'Nc'}],points:[{x:cur*Nc,y:R.resp(cur).y*1000,color:T.crit}]});
+  drawChart(CH.phase,{x:xr,y:[0,180],xl:'shaft speed  N  (rpm)',yl:'φ  (degrees)',xf,hx,band,yf:v=>nf(v),series:[...fam(q=>q.phi*180/Math.PI),{pts:curve(r=>R.resp(r).phi*180/Math.PI),color:T.accent,w:2.2,hl:'φ',hf:v=>`${nf(v,1)}°`}],vlines:[{x:Nc,color:T.crit,label:'Nc'}],points:[{x:cur*Nc,y:R.resp(cur).phi*180/Math.PI,color:T.crit}]});
+  const lp=curve(r=>R.at(r).FT),sp=curve(r=>R.at(r).sig/1e6),fm=Math.max(...lp.map(p=>p[1]))*1.1,smx=Math.max(...sp.map(p=>p[1]))*1.1;
+  drawChart(CH.load,{x:xr,y:[0,fm],y2:[0,smx],xl:'shaft speed  N  (rpm)',yl:'bearing load  (N)',y2l:'σ  (MPa)',xf,hx,band,yf:v=>sigT(v),series:[{pts:lp,color:T.accent,w:2.2,hl:'F',hf:v=>`${sigT(v)} N`},{pts:sp,color:T.gold,w:1.8,ax:1,hl:'σ',hf:v=>`${nf(v,1)} MPa`}],vlines:[{x:Nc,color:T.crit,label:'Nc'}],points:[{x:cur*Nc,y:R.at(cur).FT,color:T.crit}]});
+  drawRun();
+}
+function drawRun(){
+  const Nc=R.Nc,sim=S.sim,ss=curve(r=>R.resp(r).y*1000,2.2,400);let ym=R.ypk*1000;if(sim.up)ym=Math.max(ym,sim.up.max*1000);if(sim.down)ym=Math.max(ym,sim.down.max*1000);
+  const series=[{pts:ss,color:T.muted,w:1.3,dash:[6,4],hl:'steady',hf:v=>`${sigT(v)} mm`}];
+  if(sim.up)series.push({pts:sim.up.pts,color:T.accent,w:1.8,hl:'run-up',hf:v=>`${sigT(v)} mm`});
+  if(sim.down)series.push({pts:sim.down.pts,color:T.crit,w:1.8,hl:'coast-down',hf:v=>`${sigT(v)} mm`});
+  drawChart(CH.run,{x:[0,2.2*Nc],y:[0,ym*1.1],xl:'instantaneous speed  N  (rpm)',yl:'|OS|  (mm)',xf:x=>nf(x),hx:x=>`N = ${nf(x)} rpm`,yf:v=>sigT(v),band:[0.85*Nc,1.15*Nc],series,vlines:[{x:Nc,color:T.crit,label:'Nc'}]});
+}
+function drawModes(){
+  const cols=[T.accent,T.crit,T.gold],series=[];
+  for(let n=0;n<3;n++){const raw=[];let mx=0;for(let i=0;i<=300;i++){const s=i/300,v=modeShape(S.bc,n,s);raw.push([s*S.L,v]);if(Math.abs(v)>Math.abs(mx))mx=v;}series.push({pts:raw.map(([x,v])=>[x,v/mx]),color:cols[n],w:1.8,hl:`mode ${n+1}`,hf:v=>nf(v,2)});}
+  const st=[];for(let i=0;i<=300;i++){const s=i/300;st.push([s*S.L,R.beam.shapeN(s)]);}
+  series.push({pts:st,color:T.ink,w:1.3,dash:[5,4],hl:'disc bow',hf:v=>nf(v,2)});
+  drawChart(CH.mode,{x:[0,S.L],y:[-1.15,1.15],xl:'position along the shaft  x  (mm)',yl:'normalised deflection',xf:x=>nf(x),hx:x=>`x = ${nf(x)} mm`,yf:v=>nf(v,1),series,vlines:[{x:S.a*S.L,color:T.muted,label:'disc'}]});
+  $('#modeBc').textContent=LABEL[S.bc];
+  $('#modeLeg').innerHTML=R.ws.map((w,i)=>`<span style="color:${['var(--accent)','var(--crit)','var(--gold)'][i]}"><i class="sw"></i>mode ${i+1}: ${spdS(w)}</span>`).join('')+`<span><i class="sw d"></i>static bow under the disc</span>`;
+}
+function revealCharts(list){const s=performance.now();list.forEach(c=>c._rev=0);const tick=()=>{const k=Math.min(1,(performance.now()-s)/1100),e=1-Math.pow(1-k,3);list.forEach(c=>{c._rev=e;if(c._o)drawChart(c,c._o);});if(k<1)requestAnimationFrame(tick);};requestAnimationFrame(tick);}
+
+/* =================== Transient (RK4) =================== */
+function simulate(dir){
+  const wmax=2.2*R.wc,Ts=S.T,al=(dir==='up'?1:-1)*wmax/Ts,k=R.k,c=R.c,M=R.Meff,me=R.m*R.e;
+  let steps=Math.ceil(Ts/(TAU/wmax/60));steps=Math.min(steps,2.5e6);const dt=Ts/steps,w0=dir==='up'?0:wmax;
+  let x=0,vx=0,y=0,vy=0;
+  if(dir==='down'){const r0=R.resp(2.2);x=r0.y*Math.cos(-r0.phi);y=r0.y*Math.sin(-r0.phi);vx=-r0.y*wmax*Math.sin(-r0.phi);vy=r0.y*wmax*Math.cos(-r0.phi);}
+  const f=(t,X,VX,Y,VY,o)=>{const th=w0*t+0.5*al*t*t,w=w0+al*t,cs=Math.cos(th),sn=Math.sin(th);o[0]=VX;o[1]=(me*(w*w*cs+al*sn)-c*VX-k*X)/M;o[2]=VY;o[3]=(me*(w*w*sn-al*cs)-c*VY-k*Y)/M;};
+  const k1=[0,0,0,0],k2=[0,0,0,0],k3=[0,0,0,0],k4=[0,0,0,0],stride=Math.max(1,Math.floor(steps/2400)),pts=[],smp=[];let max=0,wAt=0;
+  for(let i=0;i<=steps;i++){const t=i*dt;
+    if(i%stride===0){const a=Math.hypot(x,y),w=w0+al*t,th=w0*t+0.5*al*t*t;pts.push([rpm(w),a*1000]);smp.push({x,y,a,w,th:th%TAU});}
+    const a=Math.hypot(x,y);if(a>max){max=a;wAt=w0+al*t;}if(i===steps)break;
+    f(t,x,vx,y,vy,k1);f(t+dt/2,x+dt/2*k1[0],vx+dt/2*k1[1],y+dt/2*k1[2],vy+dt/2*k1[3],k2);f(t+dt/2,x+dt/2*k2[0],vx+dt/2*k2[1],y+dt/2*k2[2],vy+dt/2*k2[3],k3);f(t+dt,x+dt*k3[0],vx+dt*k3[1],y+dt*k3[2],vy+dt*k3[3],k4);
+    x+=dt/6*(k1[0]+2*k2[0]+2*k3[0]+k4[0]);vx+=dt/6*(k1[1]+2*k2[1]+2*k3[1]+k4[1]);y+=dt/6*(k1[2]+2*k2[2]+2*k3[2]+k4[2]);vy+=dt/6*(k1[3]+2*k2[3]+2*k3[3]+k4[3]);}
+  if(dir==='down')pts.reverse();
+  S.sim[dir]={pts,smp,max,wAt,steps,key:simKey(),dir};S.sim.last=dir;$('#bRep').disabled=false;runStats();drawRun();return S.sim[dir];
+}
+const simKey=()=>JSON.stringify([S.bc,S.mat,S.d,S.L,S.m,S.a,S.e,S.z,S.sm,S.T]);
+function runStats(){const u=S.sim.up,d=S.sim.down;$('#sPk').innerHTML=`${sig(R.ypk*1000)} mm at ${spdS(R.rpk*R.wc)}`;$('#sUp').innerHTML=u?`${sig(u.max*1000)} mm at ${spdS(u.wAt)}`:'—';$('#sDn').innerHTML=d?`${sig(d.max*1000)} mm at ${spdS(d.wAt)}`:'—';const l=S.sim[S.sim.last];$('#sSt').textContent=l?nf(l.steps):'—';}
+function playSim(s){if(!s)return;S.play={s:s.smp,max:s.max,t0:performance.now(),dur:9000,dir:s.dir};if(S.paused)togglePause();showView('vRig');}
+
+/* =================== UI build =================== */
+const PARAMS=[{k:'d',sym:'d',label:'Diameter',unit:'mm',min:4,max:30,step:0.5,dp:1,grp:'pShaft'},{k:'L',sym:'L',label:'Span',unit:'mm',min:200,max:1500,step:10,dp:0,grp:'pShaft'},
+  {k:'m',sym:'m',label:'Mass',unit:'kg',min:0.1,max:10,step:0.1,dp:1,grp:'pDisc'},{k:'a',sym:'a/L',label:'Position along span',unit:'',min:0.1,max:0.9,step:0.01,dp:2,grp:'pDisc'},
+  {k:'e',sym:'e',label:'Eccentricity',unit:'mm',min:0.01,max:1,step:0.01,dp:2,grp:'pDisc'},{k:'z',sym:'ζ',label:'Damping ratio',unit:'',min:0.005,max:0.4,step:0.005,dp:3,grp:'pDisc'}];
+PARAMS.forEach(p=>{$('#'+p.grp).insertAdjacentHTML('beforeend',`<div class="prm"><div class="top"><span class="sym">${p.sym}</span><label for="r-${p.k}">${p.label}</label><span class="nin"><input type="number" id="n-${p.k}" min="${p.min}" max="${p.max}" step="${p.step}" aria-label="${p.label} value"><em>${p.unit}</em></span></div><input type="range" id="r-${p.k}" min="${p.min}" max="${p.max}" step="${p.step}"></div>`);});
+const fillP=el=>{const p=(el.value-el.min)/(el.max-el.min)*100;el.style.setProperty('--p',p+'%');};
+function syncInputs(){PARAMS.forEach(p=>{const r=$('#r-'+p.k),n=$('#n-'+p.k);if(p.k==='a'){r.min=n.min=S.bc==='cf'?0.2:0.1;r.max=n.max=S.bc==='cf'?1:0.9;}r.value=S[p.k];if(document.activeElement!==n)n.value=(+S[p.k]).toFixed(p.dp);fillP(r);});
+  $('#mat').value=S.mat;$('#sm').checked=S.sm;$('#inR').value=S.r;fillP($('#inR'));$('#inT').value=S.T;fillP($('#inT'));$('#oT').textContent=nf(S.T,1)+' s';$$('.bcb').forEach(b=>b.setAttribute('aria-pressed',b.dataset.bc===S.bc));}
+PARAMS.forEach(p=>{$('#r-'+p.k).addEventListener('input',e=>{S[p.k]=+e.target.value;paramsChanged();});
+  $('#n-'+p.k).addEventListener('change',e=>{let v=parseFloat(e.target.value);if(!Number.isFinite(v))v=S[p.k];v=clamp(v,+e.target.min,+e.target.max);S[p.k]=v;e.target.value=v.toFixed(p.dp);paramsChanged();});});
+const bcIcon=bc=>{const[l,r]=BCS[bc];const sup=(t,x,dir)=>t==='pinned'?`<path d="M${x} 11 l-5 8 h10 z" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M${x-7} 19.5 h14" stroke="currentColor"/>`:t==='fixed'?`<path d="M${x} 3 v16" stroke="currentColor" stroke-width="1.6"/>${[4,8,12,16].map(y=>`<path d="M${x} ${y} l${dir*-4} 3" stroke="currentColor" stroke-width=".8"/>`).join('')}`:'';
+  return`<svg viewBox="0 0 100 22" preserveAspectRatio="xMidYMid meet"><path d="M14 11 H86" stroke="currentColor" stroke-width="2"/><rect x="47" y="4" width="6" height="14" fill="currentColor" opacity=".55"/>${sup(l,14,1)}${sup(r,86,-1)}</svg>`;};
+$('#bcs').innerHTML=Object.keys(BCS).map(bc=>`<button class="bcb" type="button" data-bc="${bc}" aria-pressed="false">${bcIcon(bc)}${LABEL[bc]}</button>`).join('');
+$('#bcs').addEventListener('click',e=>{const b=e.target.closest('.bcb');if(!b)return;S.bc=b.dataset.bc;if(S.bc==='cf'&&S.a<0.2)S.a=0.2;if(S.bc!=='cf'&&S.a>0.9)S.a=0.9;paramsChanged();});
+$('#mat').addEventListener('change',e=>{S.mat=e.target.value;paramsChanged();});
+$('#sm').addEventListener('change',e=>{S.sm=e.target.checked;paramsChanged();});
+$('#preset').addEventListener('change',e=>{const p=PRESETS[e.target.value];if(p){Object.assign(S,p);paramsChanged();toast('Preset loaded: '+e.target.selectedOptions[0].text);}e.target.value='';});
+
+const ROS=[{id:'Nc',s:'N<sub>c</sub>',l:'critical speed',key:1},{id:'Nd',s:'N<sub>d</sub>',l:'disc alone'},{id:'Ns',s:'N<sub>s</sub>',l:'shaft alone, mode 1'},{id:'k',s:'k',l:'stiffness at the disc'},{id:'del',s:'δ',l:'static deflection'},
+  {id:'y',s:'y',l:'whirl amplitude, OS'},{id:'phi',s:'φ',l:'phase of S behind G'},{id:'og',s:'OG',l:'mass centre from axis'},{id:'ft',s:'F<sub>T</sub>',l:'dynamic bearing load'},{id:'sig',s:'σ',l:'peak bending stress'}];
+$('#ros').innerHTML=ROS.map(r=>`<div class="ro${r.key?' key':''}"><span class="s">${r.s}</span><span class="l">${r.l}</span><span class="v" id="ro-${r.id}">—</span></div>`).join('');
+let revealK=1;
+function renderReadouts(){
+  const K=revealK,st=S.play?null:R.at(S.rv),pl=S.play?visState():null;
+  const A=st||(()=>{const r=pl.r,x=R.at(clamp(r,0,3));x.y=pl.y;x.phi=pl.phi;x.w=pl.w;x.OG=Math.sqrt(pl.y**2+R.e**2+2*pl.y*R.e*Math.cos(pl.phi));const sw=R.k*pl.y*R.beam.Mu/R.Z;x.sig=sw+x.sg;x.fos=R.M.Sy/x.sig;x.FT=pl.y*Math.hypot(R.k,R.c*pl.w);return x;})();
+  const sp=w=>{const[v,u]=spd(w*K);return`${v}<small>${u}</small>`;};
+  $('#ro-Nc').innerHTML=sp(R.wc);$('#ro-Nd').innerHTML=sp(R.wd);$('#ro-Ns').innerHTML=sp(R.ws[0]);
+  $('#ro-k').innerHTML=`${sig(R.k/1000*K)}<small>kN/m</small>`;$('#ro-del').innerHTML=`${sig(R.delta*1000*K)}<small>mm</small>`;
+  $('#ro-y').innerHTML=`${sig(A.y*1000*K)}<small>mm</small><span class="x">${nf(A.y/R.e*K,2)} e</span>`;
+  $('#ro-phi').innerHTML=`${nf(A.phi*180/Math.PI*K,1)}<small>°</small>`;$('#ro-og').innerHTML=`${sig(A.OG*1000*K)}<small>mm</small>`;
+  $('#ro-ft').innerHTML=`${sig(A.FT*K)}<small>N</small>`;
+  const fc=A.fos<1?'bad':A.fos<2?'warn':'good';$('#ro-sig').innerHTML=`${nf(A.sig/1e6*K,1)}<small>MPa</small><span class="x ${fc}">FoS ${A.fos>99?'> 99':nf(A.fos,2)}</span>`;
+  const r=A.r??S.rv,rg=$('#regime');let cls,nm,tx;
+  if(Math.abs(r-1)<0.15){cls='crit';nm='Resonance';tx='Within 15 % of the critical speed. Amplitude is limited only by damping. Pass through quickly.';}
+  else if(r<1){cls='sub';nm='Sub-critical';tx='Below N<sub>c</sub>. G lies outside S, so the heavy side flies outward.';}
+  else{cls='super';nm='Super-critical';tx='Above N<sub>c</sub>. G has moved inside S, towards the axis: the rotor is self-centring.';}
+  if(rg.dataset.c!==cls){rg.className='regime '+cls;rg.dataset.c=cls;$('#rgN').textContent=nm;$('#rgT').innerHTML=tx;}
+  $('#rgPt').style.left=clamp(r/2.5*100,0,100)+'%';
+  const w=A.w??S.rv*R.wc,[v,u]=spd(w);$('#spV').textContent=v;$('#spU').textContent=u;$('#spR').innerHTML=`<i>r</i> = ω/ω<sub>c</sub> = ${nf(r,2)}`;$('#hudN').textContent=v;if(S.play){const ir=$('#inR');ir.value=clamp(r,0,2.5);fillP(ir);}$('#hudU').textContent=u;
+  $('#hudSub').textContent=S.play?`transient ${S.play.dir==='up'?'run-up':'coast-down'} · RK4 replay`:(S.mode3d?`shaft-only whirling mode ${S.mode3d}`:'slow-motion view of synchronous whirl');
+}
+function setBand(){const b=0.85/2.5*100,w=0.3/2.5*100;$$('.trk .band,.rgauge .bd').forEach(el=>{el.style.left=b+'%';el.style.width=w+'%';});$$('.trk .nct,.rgauge .nc').forEach(el=>el.style.left='40%');}
+
+/* =================== Working, compare, obs, viva =================== */
+function working(){
+  const M=R.M,bl=BETA[S.bc][0],r=S.rv,A=R.at(r),z=S.z;
+  $('#steps').innerHTML=`
+  <div class="step"><h4><i>i</i>Section properties</h4><div class="eq"><i>I</i> = π<i>d</i>⁴/64 = π (${nf(S.d,1)} × 10⁻³)⁴/64 = <b>${sig(R.I)} m⁴</b><br><i>EI</i> = ${nf(M.E/1e9)} × 10⁹ × ${sig(R.I)} = <b>${sig(R.EI)} N m²</b><br><i>Z</i> = π<i>d</i>³/32 = <b>${sig(R.Z)} m³</b>, &nbsp; ρ<i>A</i> = <b>${sig(R.rhoA)} kg/m</b></div></div>
+  <div class="step"><h4><i>ii</i>Stiffness at the disc · ${LABEL[S.bc]}</h4><div class="eq"><i>a</i> = ${nf(R.a,3)} m, &nbsp; <i>b</i> = <i>L</i> − <i>a</i> = ${nf(R.b,3)} m<br>${KF[S.bc]} = <b>${sig(R.kForm)} N/m</b><br><span class="c">check by Macaulay's method with four boundary conditions: ${sig(R.k)} N/m</span></div></div>
+  <div class="step"><h4><i>iii</i>Critical speed of the disc alone</h4><div class="eq">δ = <i>mg</i>/<i>k</i> = ${nf(S.m,1)} × 9.81 / ${sig(R.k)} = <b>${sig(R.delta*1000)} mm</b><br>ω<sub>d</sub> = √(<i>g</i>/δ) = <b>${nf(R.wd,2)} rad/s</b><br><i>N</i><sub>d</sub> = 0.4985/√δ × 60 = <b>${nf(rpm(R.wd))} rpm</b></div></div>
+  <div class="step"><h4><i>iv</i>Critical speed of the shaft alone</h4><div class="eq">ω<sub>s</sub> = (β<i>L</i>)² √(<i>EI</i> / ρ<i>A L</i>⁴), &nbsp; β<i>L</i> = ${nf(bl,4)}<br>= ${nf(bl*bl,3)} × √(${sig(R.EI)} / (${sig(R.rhoA)} × ${nf(R.L,3)}⁴)) = <b>${nf(R.ws[0],2)} rad/s</b><br><i>N</i><sub>s</sub> = <b>${nf(rpm(R.ws[0]))} rpm</b></div></div>
+  <div class="step"><h4><i>v</i>Dunkerley's combination</h4><div class="eq">1/ω<sub>c</sub>² = 1/ω<sub>d</sub>² + 1/ω<sub>s</sub>² = 1/${nf(R.wd,1)}² + 1/${nf(R.ws[0],1)}²<br>ω<sub>c</sub> = <b>${nf(R.wdk,2)} rad/s</b>, &nbsp; <i>N</i><sub>c</sub> = <b>${nf(rpm(R.wdk))} rpm</b>${S.sm?'':' <span class="c">(not used: shaft mass off)</span>'}<br><i>M</i><sub>eff</sub> = <i>k</i>/ω<sub>c</sub>² = <b>${nf(R.Meff,3)} kg</b>, &nbsp; <i>c</i> = 2ζ√(<i>kM</i><sub>eff</sub>) = <b>${sig(R.c)} N s/m</b></div></div>
+  <div class="step"><h4><i>vi</i>Whirl at ${spdS(A.w)}</h4><div class="eq"><i>r</i> = ω/ω<sub>c</sub> = <b>${nf(r,3)}</b><br><i>y</i> = (<i>m</i>/<i>M</i><sub>eff</sub>) <i>e r</i>² / √[(1 − <i>r</i>²)² + (2ζ<i>r</i>)²] = ${nf(R.mr,3)} × ${nf(S.e,2)} × ${nf(r*r,3)} / ${nf(Math.hypot(1-r*r,2*z*r),4)} = <b>${sig(A.y*1000)} mm</b><br>φ = tan⁻¹[2ζ<i>r</i>/(1 − <i>r</i>²)] = <b>${nf(A.phi*180/Math.PI,1)}°</b>, &nbsp; <i>OG</i> = <b>${sig(A.OG*1000)} mm</b></div></div>
+  <div class="step"><h4><i>vii</i>Loads on the bearings</h4><div class="eq"><i>F</i><sub>T</sub> = <i>y</i> √(<i>k</i>² + (<i>c</i>ω)²) = <b>${sig(A.FT)} N</b><br><span class="c">shared between the two supports in the ratio of the span</span></div></div>
+  <div class="step"><h4><i>viii</i>Stress and safety</h4><div class="eq">σ<sub>whirl</sub> = <i>k y M</i><sub>u</sub>/<i>Z</i> = <b>${nf(A.sw/1e6,2)} MPa</b>, &nbsp; σ<sub>weight</sub> = <i>mg M</i><sub>u</sub>/<i>Z</i> = <b>${nf(A.sg/1e6,2)} MPa</b><br><span class="c"><i>M</i><sub>u</sub> = ${nf(R.beam.Mu*1000,2)} N mm per newton of disc load</span><br>FoS = <i>S</i><sub>y</sub>/σ = ${nf(M.Sy/1e6)}/${nf(A.sig/1e6,1)} = <b>${A.fos>99?'> 99':nf(A.fos,2)}</b></div></div>`;
+}
+function compareTbl(){
+  let rows='';['ss','fp','ff','cf'].forEach(bc=>{const p={...S,bc};if(bc==='cf'&&p.a<0.2)p.a=0.2;if(bc!=='cf'&&p.a>0.9)p.a=0.9;const C=compute(p);rows+=`<tr class="${bc===S.bc?'cur':''}"><td>${LABEL[bc]}</td><td>${sig(C.k/1000)}</td><td>${spd(C.wd)[0]}</td><td>${spd(C.ws[0])[0]}</td><td>${spd(C.wc)[0]}</td></tr>`;});
+  const u=spd(1)[1];$('#cmpTbl').innerHTML=`<thead><tr><th>Ends</th><th><i>k</i>, kN/m</th><th><i>N</i><sub>d</sub>, ${u}</th><th><i>N</i><sub>s</sub>, ${u}</th><th><i>N</i><sub>c</sub>, ${u}</th></tr></thead><tbody>${rows}</tbody>`;
+  $('#cmpNote').innerHTML=`<i>d</i> = ${nf(S.d,1)} mm, <i>L</i> = ${nf(S.L)} mm, <i>m</i> = ${nf(S.m,1)} kg at <i>a</i>/<i>L</i> = ${nf(S.a,2)}. Fixing both ends of a mid-span disc makes the shaft four times stiffer than pin–pin, so <i>N</i><sub>d</sub> doubles. The overhung (cantilever) arrangement is by far the most flexible.`;
+  $('#betaTbl').innerHTML=`<thead><tr><th>Ends</th><th>β₁<i>L</i></th><th>β₂<i>L</i></th><th>β₃<i>L</i></th></tr></thead><tbody>${['ss','fp','ff','cf'].map(bc=>`<tr class="${bc===S.bc?'cur':''}"><td>${LABEL[bc]}</td>${BETA[bc].map(b=>`<td>${nf(b,4)}</td>`).join('')}</tr>`).join('')}</tbody>`;
+}
+const OK='whirl-obs-v2';let obs=[];
+function loadObs(){try{const s=localStorage.getItem(OK);if(s){obs=JSON.parse(s);return;}}catch(e){}
+  const mk=(p,f)=>{const C=compute({...S,...p});const Nth=rpm(C.wc);return{...p,Nth,obs:Math.round(Nth*f/10)*10,ex:true};};
+  obs=[mk({bc:'ss',mat:'steel',d:8,L:700,m:1,a:0.5,sm:true},0.96),mk({bc:'ss',mat:'steel',d:10,L:700,m:1,a:0.5,sm:true},0.97),mk({bc:'ff',mat:'steel',d:8,L:700,m:1,a:0.5,sm:true},0.93)];}
+const saveObs=()=>{try{localStorage.setItem(OK,JSON.stringify(obs));}catch(e){}};
+function renderObs(){
+  const body=obs.map((o,i)=>{const er=o.obs?((o.obs-o.Nth)/o.Nth*100):null;return`<tr><td>${i+1}${o.ex?'<span class="tag">example</span>':''}</td><td style="text-align:left">${LABEL[o.bc]}</td><td style="text-align:left">${MAT[o.mat].name}</td><td>${nf(o.d,1)}</td><td>${nf(o.L)}</td><td>${nf(o.m,1)}</td><td>${nf(o.a,2)}</td><td>${nf(o.Nth)}</td><td><input type="number" min="0" step="10" id="ob-${i}" data-i="${i}" value="${o.obs??''}" aria-label="Observed critical speed, row ${i+1}"></td><td class="${er==null?'':Math.abs(er)<5?'good':Math.abs(er)<10?'warn':'bad'}">${er==null?'—':(er>0?'+':'')+nf(er,1)+' %'}</td><td><button class="xb" data-del="${i}" aria-label="Delete row ${i+1}">×</button></td></tr>`;}).join('');
+  $('#obsTbl').innerHTML=`<thead><tr><th>No.</th><th style="text-align:left">Ends</th><th style="text-align:left">Material</th><th><i>d</i>, mm</th><th><i>L</i>, mm</th><th><i>m</i>, kg</th><th><i>a</i>/<i>L</i></th><th><i>N</i><sub>c</sub> theory, rpm</th><th><i>N</i><sub>c</sub> observed, rpm</th><th>Error</th><th></th></tr></thead><tbody>${body||'<tr><td colspan="11" style="text-align:center;color:var(--muted)">No readings yet. Set up the shaft and press “Add current set-up”.</td></tr>'}</tbody>`;
+  const done=obs.filter(o=>o.obs);$('#obsSum').innerHTML=done.length?`Mean absolute error over ${done.length} reading${done.length>1?'s':''}: <b>${nf(done.reduce((s,o)=>s+Math.abs((o.obs-o.Nth)/o.Nth*100),0)/done.length,1)} %</b>. Observed values usually fall a little below theory, because real bearings are not perfectly rigid.`:'';
+}
+$('#obsTbl').addEventListener('change',e=>{const i=e.target.dataset.i;if(i==null)return;const v=parseFloat(e.target.value);obs[i].obs=Number.isFinite(v)?v:null;obs[i].ex=false;saveObs();renderObs();});
+$('#obsTbl').addEventListener('click',e=>{const i=e.target.dataset.del;if(i==null)return;obs.splice(+i,1);saveObs();renderObs();});
+$('#bAdd').addEventListener('click',()=>{obs.push({bc:S.bc,mat:S.mat,d:S.d,L:S.L,m:S.m,a:S.a,sm:S.sm,Nth:R.Nc,obs:null,ex:false});saveObs();renderObs();toast('Set-up added. Type the observed speed in the new row.');const n=$('#ob-'+(obs.length-1));if(n)n.focus();});
+$('#bClr').addEventListener('click',()=>{obs=obs.filter(o=>!o.ex);saveObs();renderObs();});
+$('#bCsv').addEventListener('click',()=>{const csv=['No,Ends,Material,d_mm,L_mm,m_kg,a_over_L,Nc_theory_rpm,Nc_observed_rpm,error_pct',...obs.map((o,i)=>[i+1,LABEL[o.bc],MAT[o.mat].name,o.d,o.L,o.m,o.a,Math.round(o.Nth),o.obs??'',o.obs?((o.obs-o.Nth)/o.Nth*100).toFixed(1):''].join(','))].join('\n');
+  try{navigator.clipboard.writeText(csv).then(()=>toast('Table copied as CSV'),()=>toast('Copy was blocked by the browser'));}catch(e){toast('Copy was blocked by the browser');}});
+
+const QZ=[
+ {q:'At the critical speed, the angle between the deflection OS and the eccentricity SG is',o:['0°','90°','180°','It depends on e'],a:1,w:'tan φ = 2ζr/(1 − r²). At r = 1 the denominator vanishes, so φ = 90° whatever the damping.'},
+ {q:'Well above the critical speed, the mass centre G',o:['Moves further out than S','Lies between O and S, close to the bearing axis','Coincides with S','Wanders at random'],a:1,w:'φ → 180° and y → e, so S and G lie on opposite sides of O. The disc spins about its own mass centre: self-centring.'},
+ {q:'With the static deflection δ in metres, the critical speed in revolutions per second is',o:['0.4985 / √δ','4.985 √δ','√(g/δ)','2π √(δ/g)'],a:0,w:'ω = √(g/δ), so f = (1/2π)√(9.81/δ) = 0.4985/√δ rev/s.'},
+ {q:'Dunkerley\'s method gives a fundamental critical speed that is',o:['Exact','Slightly higher than the true value','Slightly lower than the true value','Independent of the shaft\'s mass'],a:2,w:'It drops the cross-coupling terms, which always makes it a lower bound. That errs on the safe side in design.'},
+ {q:'A disc at mid-span: changing from simply supported to fixed–fixed ends changes N<sub>d</sub> by a factor of',o:['√2','2','4','8'],a:1,w:'k rises from 48EI/L³ to 192EI/L³, a factor of four. Since N ∝ √k, the critical speed doubles. Check it on the Modes tab.'},
+ {q:'Increasing the damping ratio ζ mainly',o:['Raises the critical speed a great deal','Lowers the peak amplitude at N<sub>c</sub>','Removes whirling altogether','Increases the eccentricity'],a:1,w:'The peak is about e/2ζ. The undamped natural frequency, and so N<sub>c</sub>, does not change.'},
+ {q:'Running up through N<sub>c</sub> more quickly makes the peak whirl amplitude',o:['Larger','Smaller, and reached a little above N<sub>c</sub>','Exactly e/2ζ','Zero'],a:1,w:'The response needs many revolutions to build up. A quick passage cuts that short, so the peak is lower and lags to a higher speed. Try it with the Run-up button.'},
+ {q:'The critical speed of a shaft equals its natural frequency of',o:['Torsional vibration','Longitudinal vibration','Transverse vibration','Rigid-body rotation'],a:2,w:'Whirling is a bending, or transverse, motion of the shaft, so N<sub>c</sub> equals the transverse natural frequency found from the same static deflection.'}];
+let qi=0;const qa={};
+function renderViva(){
+  if(qi>=QZ.length){const c=Object.values(qa).filter(v=>v.ok).length;$('#viva').innerHTML=`<div class="vq"><div class="qn">Viva complete</div><h3>${c} of ${QZ.length} correct on the first attempt</h3><p style="color:var(--muted);margin:0 0 16px">${c===QZ.length?'Every answer right. Well prepared.':c>=6?'A strong result. Look again at the questions marked in red.':'Worth another read of the briefing before the real viva.'}</p><div style="display:flex;gap:8px"><button class="btn primary" id="vRetry">Try again</button><button class="btn" id="vBrief">Read the briefing</button></div></div>${dots()}`;
+    $('#vRetry').onclick=()=>{qi=0;Object.keys(qa).forEach(k=>delete qa[k]);renderViva();};$('#vBrief').onclick=()=>startBrief();return;}
+  const q=QZ[qi],ans=qa[qi];
+  $('#viva').innerHTML=`<div class="vq"><div class="qn">Question ${qi+1} of ${QZ.length}</div><h3>${q.q}</h3><div class="opts">${q.o.map((o,j)=>`<button class="btn opt${ans?(j===q.a?' right':j===ans.j?' wrong':''):''}" data-j="${j}" ${ans?'disabled':''}>${String.fromCharCode(97+j)}) &nbsp;${o}</button>`).join('')}</div>${ans?`<div class="why"><b class="${ans.ok?'good':'bad'}">${ans.ok?'Correct.':'Not quite.'}</b> ${q.w}</div><div style="margin-top:16px;text-align:right"><button class="btn primary" id="vNext">${qi===QZ.length-1?'See result':'Next question →'}</button></div>`:''}</div>${dots()}`;
+  $$('#viva .opt').forEach(b=>b.onclick=()=>{const j=+b.dataset.j;qa[qi]={j,ok:j===q.a};renderViva();});
+  const nx=$('#vNext');if(nx){nx.onclick=()=>{qi++;renderViva();};nx.focus();}
+}
+const dots=()=>`<div class="vdots">${QZ.map((_,i)=>`<i class="${qa[i]?(qa[i].ok?'r':'w'):(i===qi?'c':'')}"></i>`).join('')}</div>`;
+
+/* =================== Views & update =================== */
+let curView='vRig';
+function showView(id){
+  if(id!==curView){$('#'+curView).hidden=true;const v=$('#'+id);v.hidden=false;v.classList.remove('enter');void v.offsetWidth;v.classList.add('enter');curView=id;}
+  $$('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.v===id));
+  if(id==='vRig'){mountGL($('#viewport'));}
+  requestAnimationFrame(()=>{refreshView();if(id==='vAna')revealCharts([CH.amp,CH.phase,CH.load,CH.run]);if(id==='vMode')revealCharts([CH.mode]);});
+}
+function refreshView(){if(curView==='vAna'){drawAna();runStats();}if(curView==='vMode'){drawModes();compareTbl();}if(curView==='vWork')working();if(curView==='vObs')renderObs();if(curView==='vViva'&&!$('#viva').innerHTML)renderViva();}
+$('#tabs').addEventListener('click',e=>{const t=e.target.closest('.tab');if(t)showView(t.dataset.v);});
+function paramsChanged(){
+  R=compute();
+  if(S.sim.up&&S.sim.up.key!==simKey())S.sim.up=null;if(S.sim.down&&S.sim.down.key!==simKey())S.sim.down=null;if(!S.sim.up&&!S.sim.down)$('#bRep').disabled=true;
+  syncInputs();rebuildRig();renderReadouts();refreshView();
+}
+function setR(r,instant){S.r=clamp(r,0,2.5);if(instant)S.rv=S.r;$('#inR').value=S.r;fillP($('#inR'));}
+$('#inR').addEventListener('input',e=>{S.play=null;setR(+e.target.value);});
+$$('.qbtns [data-r]').forEach(b=>b.addEventListener('click',()=>{S.play=null;setR(+b.dataset.r);}));
+$('#inT').addEventListener('input',e=>{S.T=+e.target.value;fillP(e.target);$('#oT').textContent=nf(S.T,1)+' s';});
+$('#bUp').addEventListener('click',()=>{simulate('up');toast('Run-up simulated. Press “Replay in 3D” to watch it.');});
+$('#bDn').addEventListener('click',()=>{simulate('down');toast('Coast-down simulated.');});
+$('#bRep').addEventListener('click',()=>playSim(S.sim[S.sim.last]||S.sim.up||S.sim.down));
+$('#bRun').addEventListener('click',runUpNow);
+function runUpNow(){const s=simulate('up');playSim(s);toast(`Accelerating from rest to 2.2 Nc in ${nf(S.T,1)} s of machine time, shown over 9 s`);}
+$$('#camseg button').forEach(b=>b.addEventListener('click',()=>flyTo(b.dataset.cam)));
+$$('[data-m3]').forEach(b=>b.addEventListener('click',()=>{S.mode3d=+b.dataset.m3;updateLUT();$('#modebadge').hidden=false;$('#modeTxt').innerHTML=`Bare-shaft mode ${S.mode3d} · ${spdS(R.ws[S.mode3d-1])}`;showView('vRig');flyTo('iso');}));
+$('#modeOff').addEventListener('click',()=>{S.mode3d=0;$('#modebadge').hidden=true;});
+function togglePause(){S.paused=!S.paused;$('#playIco').innerHTML=S.paused?'<path d="M4 2 L14 8 L4 14 Z" fill="currentColor"/>':'<rect x="3" y="2" width="3.2" height="12" fill="currentColor"/><rect x="9.8" y="2" width="3.2" height="12" fill="currentColor"/>';$('#bPlay').setAttribute('aria-label',S.paused?'Play':'Pause');}
+$('#bPlay').addEventListener('click',togglePause);
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2600);}
+
+/* =================== Settings =================== */
+const THEMES=[['paper','Paper',['#FFFFFF','#16181D','#1F3A68']],['drafting','Drafting',['#14171C','#E8EAEE','#8DB0EA']],['blueprint','Blueprint',['#0E2B4E','#EAF2FF','#BFD9FF']]];
+const ACC=[['prussian','#1F3A68','Prussian blue'],['oxblood','#8C1D2C','Oxblood'],['forest','#1F5A43','Forest'],['graphite','#2D3138','Graphite']];
+$('#themes').innerHTML=THEMES.map(([k,n,c])=>`<button class="swb" data-k="${k}"><div class="pv" style="background:${c[0]};border:1px solid var(--rule)"><i style="background:${c[1]}"></i><i style="background:${c[2]}"></i><i style="background:${c[1]};opacity:.4"></i></div>${n}</button>`).join('');
+$('#accents').innerHTML=ACC.map(([k,c,n])=>`<button class="dot" data-k="${k}" style="background:${c}" title="${n}" aria-label="${n}"></button>`).join('');
+$('#finish').innerHTML=[['steel','Machined steel'],['brass','Brass'],['oxide','Black oxide']].map(([k,n])=>`<button data-k="${k}">${n}</button>`).join('');
+const TOG=[['labels','Point labels O, S, G'],['orbit','Whirl orbit of S'],['guard','Safety guard'],['shadows','Soft shadows'],['autorot','Slowly orbit the camera']];
+$('#toggles').innerHTML=TOG.map(([k,n])=>`<div class="sw-row" role="switch" tabindex="0" data-k="${k}"><span>${n}</span><span class="tog"></span></div>`).join('');
+function syncSettings(){
+  $$('#themes .swb').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===SET.theme));$$('#accents .dot').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===SET.accent));
+  $$('#finish button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===SET.finish));$$('#scaleSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===SET.scale));$$('#unitSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===SET.unit));
+  $$('#toggles .sw-row').forEach(r=>{r.setAttribute('aria-checked',!!SET[r.dataset.k]);r.querySelector('.tog').classList.toggle('on',!!SET[r.dataset.k]);});
+  $('#exag').value=SET.exag;fillP($('#exag'));$('#oExag').textContent='× '+nf(SET.exag,2);$('#slow').value=SET.slow;fillP($('#slow'));$('#oSlow').textContent='× '+nf(SET.slow,2);
+}
+function applySettings(){document.documentElement.dataset.theme=SET.theme;document.documentElement.dataset.accent=SET.accent;readTokens();applyRigSettings();syncSettings();saveSet();renderReadouts();refreshView();}
+$('#themes').addEventListener('click',e=>{const b=e.target.closest('.swb');if(b){SET.theme=b.dataset.k;applySettings();}});
+$('#accents').addEventListener('click',e=>{const b=e.target.closest('.dot');if(b){SET.accent=b.dataset.k;applySettings();}});
+$('#finish').addEventListener('click',e=>{const b=e.target.closest('button');if(b){SET.finish=b.dataset.k;applySettings();}});
+$('#scaleSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(b){SET.scale=b.dataset.v;applySettings();}});
+$('#unitSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(b){SET.unit=b.dataset.v;applySettings();}});
+$('#toggles').addEventListener('click',e=>{const r=e.target.closest('.sw-row');if(r){SET[r.dataset.k]=!SET[r.dataset.k];applySettings();}});
+$('#toggles').addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();e.stopPropagation();const r=e.target.closest('.sw-row');if(r){SET[r.dataset.k]=!SET[r.dataset.k];applySettings();}}});
+$('#exag').addEventListener('input',e=>{SET.exag=+e.target.value;syncSettings();saveSet();});
+$('#slow').addEventListener('input',e=>{SET.slow=+e.target.value;syncSettings();saveSet();});
+$('#sReset').addEventListener('click',()=>{SET={...DEF};applySettings();toast('Settings reset');});
+$('#sReplay').addEventListener('click',()=>{closeAll();startBrief();});
+const openSet=()=>{$('#settings').classList.add('on');$('#scrim').classList.add('on');};
+const closeAll=()=>{$('#settings').classList.remove('on');$('#help').classList.remove('on');$('#scrim').classList.remove('on');};
+$('#tSet').addEventListener('click',openSet);$('#setClose').addEventListener('click',closeAll);$('#scrim').addEventListener('click',closeAll);
+$('#tHelp').addEventListener('click',()=>{$('#help').classList.add('on');$('#scrim').classList.add('on');});$('#helpClose').addEventListener('click',closeAll);
+const fullscreen=()=>{try{if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen();}catch(e){}};
+$('#tFull').addEventListener('click',fullscreen);
+$('#tBrief').addEventListener('click',()=>startBrief());
+
+/* =================== Briefing =================== */
+const fr=(a,b)=>`<span class="frac"><span>${a}</span><span>${b}</span></span>`;
+const CHAP=[
+ {n:'Chapter I',t:'Aim and apparatus',fig:'<b>Fig. 1.</b> The apparatus: motor, flexible coupling, slender shaft on two self-aligning bearings, and a disc carrying a small unbalance (red).',
+  h:`<p class="lead"><span class="sc">Aim.</span> To find the speed at which a shaft carrying a disc begins to whirl violently, to predict that speed from theory for different end conditions, and to compare prediction with observation.</p>
+  <p><span class="sc">Apparatus.</span> A variable-speed motor drives a slender steel shaft through a flexible coupling. The shaft runs in two self-aligning bearings and carries a single disc near mid-span. A tachometer reads the speed.</p>
+  <p>The model on the right is drawn from the same parameters you will control later. Drag it to look around.</p>`,scene:{cam:'hero',r:0.45}},
+ {n:'Chapter II',t:'An unavoidable unbalance',fig:'<b>Fig. 2.</b> The disc close up. The red block is the unbalance; the gold point is the mass centre <i>G</i>, set off from the shaft centre <i>S</i>.',
+  h:`<p>Let <i>S</i> be the geometric centre of the shaft at the disc and <i>G</i> the mass centre of the disc. However carefully the disc is machined, <i>G</i> never lies exactly on <i>S</i>. Their separation is the <span class="sc">eccentricity</span>:</p>
+  <div class="disp"><i>e</i> = <i>SG</i> <span class="tag">(1)</span></div>
+  <p>In a well-balanced rotor <i>e</i> is a few hundredths of a millimetre; in a poor one, a few tenths. When the shaft turns at ω, the mass of the disc is carried round a circle and needs a centripetal force. The shaft can only supply it by bending.</p>
+  <p>The question for the rest of this briefing: <em>how far must it bend?</em></p>`,scene:{cam:'close',r:0.32,hl:true}},
+ {n:'Chapter III',t:'Equilibrium of the whirling disc',fig:'<b>Fig. 3.</b> Forces on the disc at <i>r</i> = 0.6. Gold: centrifugal force through <i>G</i>. Blue: elastic pull of the shaft back towards the bearing axis <i>O</i>.',
+  h:`<p>Let <i>y</i> = <i>OS</i> be the bow of the shaft at the disc, measured from the bearing axis <i>O</i>. The shaft behaves as a spring of stiffness <i>k</i>, pulling the disc back with a force <i>k y</i>. The disc's mass flies outward with <i>m</i> ω² (<i>y</i> + <i>e</i>). Ignoring damping, these balance:</p>
+  <div class="disp"><i>k y</i> = <i>m</i> ω² (<i>y</i> + <i>e</i>) &nbsp;⟹&nbsp; <i>y</i> = ${fr('<i>e r</i>²','1 − <i>r</i>²')}, &nbsp; <i>r</i> = ${fr('ω','ω<sub>n</sub>')} <span class="tag">(2)</span></div>
+  <p>Below the natural frequency, <i>y</i> has the same sign as <i>e</i>: the heavy side of the disc flies outward and <i>G</i> lies beyond <i>S</i>.</p>`,scene:{cam:'axial',r:0.6,arrows:true}},
+ {n:'Chapter IV',t:'The critical speed',fig:'<b>Fig. 4.</b> The speed is raised slowly towards the critical speed. Watch the bow of the shaft grow sharply as <i>r</i> approaches 1.',
+  h:`<p>As <i>r</i> → 1 the denominator of (2) vanishes and the deflection grows without bound. That speed is the <span class="sc">critical</span> or <span class="sc">whirling speed</span>. It is the natural frequency of transverse vibration of the shaft:</p>
+  <div class="disp">ω<sub>c</sub> = √${fr('<i>k</i>','<i>m</i>')} = √${fr('<i>g</i>','δ')}, &nbsp;&nbsp; <i>N</i><sub>c</sub> = ${fr('0.4985','√δ')} rev/s <span class="tag">(3)</span></div>
+  <p>Here δ = <i>mg</i>/<i>k</i> is the static deflection of the shaft under the weight of the disc, in metres. A short, stiff shaft has a small δ and a high critical speed; a long, slender one has a low critical speed.</p>`,scene:{cam:'side',ramp:[0.3,0.985,9000]}},
+ {n:'Chapter V',t:'Through and beyond',fig:'<b>Fig. 5.</b> At twice the critical speed. <i>G</i> now lies between <i>S</i> and the axis <i>O</i>, and the disc spins about its own mass centre.',
+  h:`<p>Real shafts have some damping, ratio ζ. The amplitude stays finite, and the deflection lags the unbalance by a phase angle φ:</p>
+  <div class="disp"><i>y</i> = ${fr('<i>e r</i>²','√[(1 − <i>r</i>²)² + (2ζ<i>r</i>)²]')}, &nbsp;&nbsp; tan φ = ${fr('2ζ<i>r</i>','1 − <i>r</i>²')} <span class="tag">(4)</span></div>
+  <p>At <i>r</i> = 1, φ = 90° and <i>y</i> ≈ <i>e</i>/2ζ. Above it, φ → 180°: <i>G</i> moves inside <i>S</i>, towards the axis, and <i>y</i> → <i>e</i>. The rotor becomes <span class="sc">self-centring</span>. This is why turbines run steadily well above their first critical speed, provided they pass through it quickly.</p>`,scene:{cam:'axial',r:2.0}},
+ {n:'Chapter VI',t:'End conditions and the shaft’s own mass',fig:'<b>Fig. 6.</b> The model cycles through the four end conditions treated in this laboratory. Now showing: <b id="figBc">Simply supported</b>.',
+  h:`<p>The stiffness at the disc depends on how the ends are held and on where the disc sits, with <i>a</i> + <i>b</i> = <i>L</i>:</p>
+  <table class="ktab"><tr><td>Simply supported</td><td>${KF.ss}</td></tr><tr><td>Fixed–pinned</td><td>${KF.fp}</td></tr><tr><td>Fixed–fixed</td><td>${KF.ff}</td></tr><tr><td>Cantilever, disc at <i>a</i></td><td>${KF.cf}</td></tr></table>
+  <p>A shaft also whirls under its own distributed mass, at ω<sub>s</sub> = (β<i>L</i>)² √(<i>EI</i>/ρ<i>AL</i>⁴). Dunkerley's method combines the two, giving a slightly conservative result:</p>
+  <div class="disp">${fr('1','ω<sub>c</sub>²')} = ${fr('1','ω<sub>d</sub>²')} + ${fr('1','ω<sub>s</sub>²')} <span class="tag">(5)</span></div>`,scene:{cam:'iso',r:0.7,cycle:true}},
+ {n:'Chapter VII',t:'Using this laboratory',fig:'<b>Fig. 7.</b> Ready. Everything you have read is now live.',
+  h:`<ol>
+  <li>Choose the end conditions, shaft and disc in the <span class="sc">parameters</span> panel. The theoretical <i>N</i><sub>c</sub> updates at once.</li>
+  <li>Raise the speed with the slider along the bottom, or the arrow keys. Watch the bow, the phase of <i>G</i> in the end view, and the stresses in the <span class="sc">results</span> panel.</li>
+  <li>Press <b>Run-up</b> to accelerate through <i>N</i><sub>c</sub>. The full equations of motion are integrated with a fourth-order Runge–Kutta scheme and replayed in 3D.</li>
+  <li>Open <b>Analysis</b> for the response curves, <b>Modes</b> for the shaft's own whirling modes, and <b>Working</b> for every formula with today's numbers.</li>
+  <li>Record your readings in the <b>Lab sheet</b>, then test yourself in the <b>Viva</b>.</li></ol>
+  <p style="color:var(--muted);font-size:14.5px">Press <kbd class="k">?</kbd> at any time for shortcuts. The gear icon changes the theme, ink, disc finish and display.</p>`,scene:{cam:'iso',r:0.8},launch:true}
+];
+let ci=0,cycleT=null,saved=null;
+function setScene(sc){
+  if(!sc)return;S.play=null;S.mode3d=0;G3.highlight=!!sc.hl;G3.arrows=!!sc.arrows;G3.ramp=null;clearInterval(cycleT);
+  if(saved&&S.bc!==saved.bc&&!sc.cycle){S.bc=saved.bc;S.a=saved.a;paramsChanged();}
+  if(sc.ramp){S.r=S.rv=sc.ramp[0];G3.ramp={r0:sc.ramp[0],r1:sc.ramp[1],s:performance.now()+900,d:sc.ramp[2]};}else setR(sc.r);
+  if(sc.cycle){const seq=['ss','fp','ff','cf'];let k=0;cycleT=setInterval(()=>{k=(k+1)%4;S.bc=seq[k];if(S.bc==='cf')S.a=0.85;else S.a=saved?saved.a:0.5;paramsChanged();const fb=$('#figBc');if(fb)fb.textContent=LABEL[S.bc];},2600);}
+  flyTo(sc.cam,1800);
+}
+function renderChap(){
+  const c=CHAP[ci];
+  $('#chapBody').innerHTML=`<div class="chap"><div class="num">${c.n} of VII</div><h2>${c.t}</h2>${c.h}${c.launch?'<button class="btn primary launch" id="bLaunch" type="button">Enter the Laboratory →</button>':''}</div>`;
+  $('#chapBody').scrollTop=0;
+  $('#prog').innerHTML=CHAP.map((_,i)=>`<span class="${i<=ci?'done':''}"></span>`).join('');
+  const nxt=CHAP[ci+1];
+  $('#bnav').innerHTML=`<button class="btn" id="bBack" ${ci===0?'disabled':''}>← Back</button><span style="color:var(--muted);font-size:13.5px">${ci+1} / ${CHAP.length}</span>${nxt?`<button class="btn primary" id="bNext">Next: ${nxt.t} →</button>`:'<span></span>'}`;
+  $('#bBack').onclick=()=>{if(ci>0){ci--;renderChap();}};if(nxt)$('#bNext').onclick=()=>{ci++;renderChap();};
+  if(c.launch)$('#bLaunch').onclick=launch;
+  $('#figcap').innerHTML=c.fig;setScene(c.scene);
+}
+function setStage(s){document.body.dataset.stage=s;requestAnimationFrame(()=>{size3D();});}
+function startBrief(){
+  closeAll();saved={bc:S.bc,a:S.a};ci=0;mountGL($('#stage'));setStage('brief');if(G3.ok)G3.ctl.autoRotate=false;renderChap();
+}
+$('#bBegin').addEventListener('click',startBrief);
+$('#bSkip').addEventListener('click',()=>launch());$('#bSkip2').addEventListener('click',()=>launch());
+
+/* =================== Launch / boot =================== */
+let launched=false;
+function launch(){
+  clearInterval(cycleT);G3.highlight=G3.arrows=false;G3.ramp=null;
+  if(saved){S.bc=saved.bc;S.a=saved.a;}paramsChanged();
+  if(G3.ok)G3.ctl.autoRotate=SET.autorot;if(launched){setStage('app');showView('vRig');flyTo('iso',1400);setR(0.7);return;}
+  launched=true;setStage('boot');
+  const lines=['Assembling the rig','Solving the beam equations (Macaulay, 4 × 4)','Computing whirling modes (β<i>L</i> roots)','Preparing the Runge–Kutta integrator','Calibrating the tachometer'];
+  $('#bootlines').innerHTML=lines.map(l=>`<div class="bootline"><span>${l}</span><span class="ok">✓</span></div>`).join('');
+  $('#boot').classList.add('show');const els=$$('.bootline');const step=330;
+  els.forEach((el,i)=>{setTimeout(()=>el.classList.add('on'),200+i*step);setTimeout(()=>el.classList.add('done'),200+i*step+240);setTimeout(()=>$('#bootbar').style.width=((i+1)/els.length*100)+'%',200+i*step+200);});
+  const T0=200+els.length*step+420;
+  setTimeout(()=>{
+    mountGL($('#viewport'));if(G3.ok){G3.cam.position.set(9,5.5,11);G3.ctl.target.set(-0.3,Y0,0);}
+    $('#boot').classList.remove('show');setStage('app');
+    const app=$('#app');
+    [['#top',0],['#left',160],['#main',320],['#right',420],['#bottom',620]].forEach(([s,d])=>{$(s).style.transitionDelay=d+'ms';});
+    revealK=0;renderReadouts();
+    requestAnimationFrame(()=>{app.classList.remove('pre');
+      $$('.ro').forEach((el,i)=>{el.style.transitionDelay=(520+i*70)+'ms';});
+      flyTo('iso',2400);setR(0.7);
+      const s0=performance.now()+600;const cu=()=>{const k=clamp((performance.now()-s0)/1200,0,1);revealK=1-Math.pow(1-k,3);renderReadouts();if(k<1)requestAnimationFrame(cu);else setTimeout(()=>{$$('[data-boot],.ro').forEach(el=>el.style.transitionDelay='0ms');toast('Laboratory ready. Press ? for shortcuts.');},300);};requestAnimationFrame(cu);
+    });
+  },T0);
+}
+
+/* =================== Keyboard =================== */
+const CAMS=['iso','side','axial','top','close'];
+document.addEventListener('keydown',e=>{
+  const tg=e.target.tagName;if((tg==='INPUT'&&e.target.type!=='range')||tg==='SELECT'||tg==='TEXTAREA')return;
+  if(e.key==='Escape'){closeAll();return;}
+  const st=document.body.dataset.stage;
+  if(st==='intro'){if(e.key==='Enter'){e.preventDefault();startBrief();}return;}
+  if(st==='brief'){if(e.key==='ArrowRight'||e.key==='Enter'){e.preventDefault();if(ci<CHAP.length-1){ci++;renderChap();}else launch();}if(e.key==='ArrowLeft'&&ci>0){ci--;renderChap();}return;}
+  if(st!=='app')return;
+  if(tg==='INPUT'&&e.target.type==='range'&&e.target.id!=='inR'&&(e.key.startsWith('Arrow')))return;
+  const k=e.key.toLowerCase();
+  if(e.key===' '){e.preventDefault();togglePause();}
+  else if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();S.play=null;setR(S.r+(e.key==='ArrowRight'?1:-1)*(e.shiftKey?0.1:0.02));}
+  else if(k==='c'){S.play=null;setR(1);}else if(k==='r'){runUpNow();}
+  else if('123456'.includes(e.key)&&e.key.length===1){showView(['vRig','vAna','vMode','vWork','vObs','vViva'][+e.key-1]);}
+  else if(k==='v'){const i=(CAMS.indexOf(G3.camName)+1)%CAMS.length;flyTo(CAMS[i],1000);showView('vRig');}
+  else if(k==='s'){openSet();}else if(k==='f'){fullscreen();}else if(e.key==='?'){$('#help').classList.add('on');$('#scrim').classList.add('on');}
+});
+
+/* =================== Loop =================== */
+let last=performance.now(),roT=0;
+function loop(now){
+  const dt=Math.min(0.05,(now-last)/1000);last=now;
+  if(G3.ramp){const k=clamp((now-G3.ramp.s)/G3.ramp.d,0,1),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;S.r=S.rv=G3.ramp.r0+(G3.ramp.r1-G3.ramp.r0)*e;}
+  else S.rv+=(S.r-S.rv)*Math.min(1,dt*2.6);
+  const st=visState();
+  if(!S.paused)psi+=dt*TAU*SET.slow*(0.16+0.3*Math.min(st.r,2.5));
+  const stage=document.body.dataset.stage;
+  step3D(now,st);
+  if(stage==='app'||stage==='boot'){
+    if(curView==='vRig')drawEnd(st);
+    if(now-roT>90&&revealK>=1){roT=now;renderReadouts();if(curView==='vAna'&&Math.abs(S.r-S.rv)>1e-4)drawAna();if(curView==='vWork'&&Math.abs(S.r-S.rv)>1e-3)working();}
+  }
+  requestAnimationFrame(loop);
+}
+
+/* =================== Boot =================== */
+window.addEventListener('resize',()=>{size3D();refreshView();});
+new ResizeObserver(()=>{size3D();}).observe($('#glwrap'));
+init3D();setBand();loadObs();syncInputs();syncSettings();renderReadouts();
+if(G3.ok){G3.ctl.autoRotate=true;G3.ctl.autoRotateSpeed=0.35;flyTo('hero',3800);}
+setR(0.55,true);
+requestAnimationFrame(()=>{size3D();requestAnimationFrame(loop);});
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>refreshView());
+})();
+</script>
+</body>
+</html>
